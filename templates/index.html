@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Registro Original de Custos</title>
+<style>
+  :root {
+    --primary: #1e3a8a;
+    --primary-mid: #1d4ed8;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: #dbeafe;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --sidebar-w: 220px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06), 0 4px 16px rgba(0,0,0,.3);
+    flex-shrink: 0;
+  }
+  header .logo {
+    font-size: 16px;
+    font-weight: 800;
+    white-space: nowrap;
+    letter-spacing: -.4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  header .logo span { color: #a5b4fc; }
+  header .prop-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 380px;
+    margin-left: 8px;
+  }
+  header .prop-select-wrap label { font-size: 11px; opacity: .6; white-space: nowrap; text-transform: uppercase; letter-spacing: .4px; }
+  #globalImovelSelect {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  #globalImovelSelect:hover { background: rgba(255,255,255,.12); }
+  #globalImovelSelect option { background: #1e293b; color: #fff; }
+  header .header-actions { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+
+  /* User badge */
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 5px;
+    background: rgba(255,255,255,.08);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: default;
+  }
+  .user-avatar {
+    width: 26px; height: 26px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
+  .btn-logout {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,.5); font-size: 17px; padding: 4px;
+    border-radius: 5px; transition: color .15s, background .15s;
+    line-height: 1;
+  }
+  .btn-logout:hover { color: var(--danger); background: rgba(239,68,68,.12); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all .15s; text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(99,102,241,.35); }
+  .btn-accent { background: #0ea5e9; color: #fff; }
+  .btn-accent:hover { background: #0284c7; }
+  .btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.25); }
+  .btn-outline:hover { background: rgba(255,255,255,.1); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 6px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 5px; }
+
+  /* ─── LAYOUT ─── */
+  .app-body { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 56px); }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--primary);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+    overflow-y: auto;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,.05);
+  }
+  .sidebar-section-label {
+    padding: 8px 18px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: rgba(255,255,255,.5);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px;
+    color: rgba(255,255,255,.8);
+    cursor: pointer;
+    transition: all .15s;
+    border-left: 3px solid transparent;
+    font-size: 13.5px; font-weight: 500;
+    margin: 1px 0;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.12); color: #fff; }
+  .nav-item.active {
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    border-left-color: #93c5fd;
+    font-weight: 600;
+  }
+  .nav-item .icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 14px 18px;
+    font-size: 10.5px;
+    color: rgba(255,255,255,.45);
+    border-top: 1px solid rgba(255,255,255,.12);
+  }
+
+  /* ─── MAIN ─── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 28px 40px; background: var(--bg); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── PAGE TITLE ─── */
+  .page-title {
+    font-size: 19px; font-weight: 800; color: var(--text);
+    margin-bottom: 22px; display: flex; align-items: center; gap: 10px;
+  }
+  .page-title small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+
+  /* ─── STAT BAR ─── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), #818cf8);
+  }
+  .stat-card .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .stat-card .stat-value { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1; }
+  .stat-card .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  }
+
+  /* ─── DASHBOARD ─── */
+  .dash-toolbar {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 16px;
+  }
+  .view-toggle { display: flex; gap: 4px; }
+  .view-toggle button {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 14px; color: var(--text-muted); transition: all .15s;
+  }
+  .view-toggle button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  .props-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .props-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+  .prop-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px;
+    cursor: pointer; transition: all .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    position: relative; overflow: hidden;
+  }
+  .prop-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    border-color: var(--accent);
+  }
+  .prop-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), #818cf8);
+  }
+  .prop-card-list { flex-direction: row; align-items: center; gap: 20px; padding: 14px 18px; }
+  .prop-card-list::before { display: none; }
+  .prop-name { font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .prop-addr { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+  .prop-total { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+  .prop-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+  .prop-meta span { display: flex; align-items: center; gap: 4px; }
+  .mini-bar-list { display: flex; flex-direction: column; gap: 6px; }
+  .mini-bar-item { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .mini-bar-item .bar-label { width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+  .mini-bar-track { flex: 1; height: 4px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+  .mini-bar-val { font-weight: 600; color: var(--text); width: 70px; text-align: right; font-size: 11px; }
+
+  /* Nicho summary */
+  .nicho-summary { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 20px; }
+  .nicho-summary h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+  .nicho-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+  .nicho-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 13px; border-radius: 9px; font-size: 13px;
+  }
+  .nicho-item .nicho-name { font-weight: 600; }
+  .nicho-item .nicho-val { font-weight: 700; }
+
+  /* ─── FORM ─── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label {
+    font-size: 11.5px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: 9px; font-size: 14px; color: var(--text);
+    background: #fff; transition: border .15s, box-shadow .15s;
+    width: 100%; font-family: inherit;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .required-mark { color: var(--danger); }
+
+  /* ─── DROPZONE ─── */
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 22px; text-align: center; cursor: pointer;
+    transition: all .2s; background: #fafbfc; position: relative;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-light); }
+  .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone .dz-icon { font-size: 28px; margin-bottom: 6px; }
+  .dropzone .dz-text { font-size: 13px; color: var(--text-muted); }
+  .dropzone .dz-text strong { color: var(--accent); }
+  .dropzone .dz-preview {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 12px; margin-top: 10px; text-align: left;
+  }
+  .dropzone .dz-preview .dz-fname { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dropzone .dz-preview .dz-remove { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 16px; padding: 2px; }
+
+  /* ─── TABLE ─── */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--primary-mid); color: #fff;
+    padding: 11px 14px; text-align: left; font-weight: 600;
+    font-size: 12px; white-space: nowrap;
+  }
+  thead th:first-child { border-radius: 11px 0 0 0; }
+  thead th:last-child { border-radius: 0 11px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  tfoot td {
+    padding: 11px 14px; background: #f1f5f9;
+    font-weight: 700; color: var(--text);
+    border-top: 2px solid var(--border); font-size: 13px;
+  }
+  .actions-cell { display: flex; gap: 5px; }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+
+  /* ─── FILTER BAR ─── */
+  .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar select, .filter-bar input[type=text] {
+    padding: 7px 11px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 13px; color: var(--text);
+    background: #fff; min-width: 150px; transition: border .15s;
+  }
+  .filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: var(--accent); }
+
+  /* ─── QUICK FILTERS ─── */
+  .quick-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .qf-btn {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: #fff;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    color: var(--text-muted); transition: all .15s;
+  }
+  .qf-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .qf-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── TIMELINE ─── */
+  .timeline { display: flex; flex-direction: column; }
+  .timeline-day { margin-bottom: 22px; }
+  .timeline-day-header {
+    background: var(--primary-mid); color: #fff;
+    padding: 8px 16px; border-radius: 9px; font-weight: 700;
+    font-size: 13px; display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 8px;
+  }
+  .timeline-day-total { font-size: 14px; color: #a5b4fc; }
+  .timeline-entry {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 12px 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 6px; transition: box-shadow .15s;
+  }
+  .timeline-entry:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+  .timeline-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-top: 2px; }
+  .timeline-body { flex: 1; }
+  .timeline-body .t-desc { font-weight: 600; color: var(--text); font-size: 14px; }
+  .timeline-body .t-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .timeline-value { font-weight: 800; color: var(--text); font-size: 15px; white-space: nowrap; }
+
+  /* ─── DOCS ─── */
+  .docs-section-header {
+    background: var(--primary-mid); color: #fff;
+    padding: 9px 16px; border-radius: 9px; font-weight: 700;
+    font-size: 13px; margin-bottom: 10px; margin-top: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .doc-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+    display: flex; flex-direction: column; gap: 8px; transition: all .15s;
+  }
+  .doc-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+  .doc-card-header { display: flex; align-items: center; gap: 10px; }
+  .doc-icon { font-size: 26px; flex-shrink: 0; }
+  .doc-fname { font-weight: 700; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .doc-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; }
+  .doc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+
+  /* ─── MODALS ─── */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 200; display: flex;
+    align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-backdrop.hidden { display: none; }
+  .modal {
+    background: var(--card); border-radius: 16px; padding: 28px;
+    width: 100%; max-width: 560px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.2);
+    animation: modalIn .2s ease;
+    border: 1px solid var(--border);
+  }
+  .modal-lg { max-width: 660px; }
+  @keyframes modalIn { from { transform: scale(.96) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+  .modal-close {
+    background: none; border: none; font-size: 20px; cursor: pointer;
+    color: var(--text-muted); line-height: 1; padding: 4px; border-radius: 5px; transition: all .15s;
+  }
+  .modal-close:hover { color: var(--danger); background: #fef2f2; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+  /* ─── TOAST ─── */
+  #toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 12px 18px; border-radius: 10px; color: #fff;
+    font-weight: 600; font-size: 13.5px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    animation: toastIn .25s ease;
+    display: flex; align-items: center; gap: 10px; max-width: 320px;
+  }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+  .toast.info { background: var(--accent); }
+  @keyframes toastIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(40px); } }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 14px; }
+  .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ─── UTILS ─── */
+  .hidden { display: none !important; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .font-bold { font-weight: 700; }
+  .text-muted { color: var(--text-muted); }
+  .mt-1 { margin-top: 8px; }
+  .mt-2 { margin-top: 16px; }
+  .mb-1 { margin-bottom: 8px; }
+  .mb-2 { margin-bottom: 16px; }
+  .comp-link { color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .comp-link:hover { text-decoration: underline; }
+  .no-comp { font-size: 12px; color: var(--border); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  .date-range { display: flex; align-items: center; gap: 8px; }
+  .date-range input { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; }
+  .date-range span { color: var(--text-muted); font-size: 12px; }
+
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <div class="logo">🏠 Registro Original de Custos</div>
+  <div class="prop-select-wrap">
+    <label>Imovel:</label>
+    <select id="globalImovelSelect">
+      <option value="">— Selecione um imovel —</option>
+    </select>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-outline btn-sm" onclick="openNovoImovelModal()">+ Novo Imovel</button>
+    <button class="btn btn-accent btn-sm" onclick="exportarExcelAll()">&#8659; Excel</button>
+    <div class="user-badge">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span class="user-name" id="userName">{{ usuario_nome }}</span>
+    </div>
+    <button class="btn-logout" onclick="doLogout()" title="Sair">&#x23FB;</button>
+  </div>
+</header>
+
+<!-- ─── BODY ─── -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">Menu</div>
+    <div class="nav-item active" data-tab="dashboard">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" data-tab="lancamento">
+      <span class="icon">➕</span> Lancamento
+    </div>
+    <div class="nav-item" data-tab="custos">
+      <span class="icon">📋</span> Custos
+    </div>
+    <div class="nav-item" data-tab="historico">
+      <span class="icon">📅</span> Historico
+    </div>
+    <div class="nav-item" data-tab="documentos">
+      <span class="icon">📁</span> Documentos
+    </div>
+    <div class="sidebar-footer">Registro Original de Custos</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="tab-panel active" id="tab-dashboard">
+
+      <div class="stat-row" id="statRow">
+        <div class="stat-card">
+          <div class="stat-label">Total Investido</div>
+          <div class="stat-value" id="gtTotal">R$ 0,00</div>
+          <div class="stat-sub">todos os imoveis</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Imoveis</div>
+          <div class="stat-value" id="gtImoveis">0</div>
+          <div class="stat-sub">cadastrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Lancamentos</div>
+          <div class="stat-value" id="gtLancamentos">0</div>
+          <div class="stat-sub">registrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Comprovantes</div>
+          <div class="stat-value" id="gtComprovantes">0</div>
+          <div class="stat-sub">arquivos</div>
+        </div>
+      </div>
+
+      <div class="dash-toolbar">
+        <div class="page-title" style="margin-bottom:0">Imoveis</div>
+        <div class="view-toggle">
+          <button id="viewGrid" class="active" onclick="setView('grid')" title="Grade">&#8862;</button>
+          <button id="viewList" onclick="setView('list')" title="Lista">&#9776;</button>
+        </div>
+      </div>
+
+      <div id="propsContainer"></div>
+
+      <div class="nicho-summary mt-2">
+        <h3>Subtotais Por Nicho — Todos os Imoveis</h3>
+        <div class="nicho-grid" id="nichoSummaryAll"></div>
+      </div>
+    </div>
+
+    <!-- ─── LANCAMENTO ─── -->
+    <div class="tab-panel" id="tab-lancamento">
+      <div class="page-title">➕ Lancamento De Custos</div>
+      <div class="card">
+        <form id="lancamentoForm" onsubmit="submitLancamento(event)">
+          <div class="form-grid">
+
+            <div class="form-group">
+              <label>Nicho <span class="required-mark">*</span></label>
+              <select id="l_nicho" required>
+                <option value="">Selecione...</option>
+                <option>Arrematacao</option>
+                <option>Comissao De Leiloeiro</option>
+                <option>Documentacao</option>
+                <option>Cartorio / Registro</option>
+                <option>Burocracia</option>
+                <option>Juridico</option>
+                <option>Impostos / ITBI</option>
+                <option>Desocupacao</option>
+                <option>Obra / Reforma</option>
+                <option>Taxas Administrativas</option>
+                <option>Outros</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Valor R$ <span class="required-mark">*</span></label>
+              <input type="text" id="l_valor" placeholder="0,00" data-nocap required inputmode="numeric" />
+            </div>
+
+            <div class="form-group full">
+              <label>Descricao <span class="required-mark">*</span></label>
+              <input type="text" id="l_descricao" placeholder="Descreva o custo..." required />
+            </div>
+
+            <div class="form-group">
+              <label>Data do Pagamento <span class="required-mark">*</span></label>
+              <input type="date" id="l_data_pagamento" required />
+            </div>
+
+            <div class="form-group">
+              <label>Forma de Pagamento <span class="required-mark">*</span></label>
+              <select id="l_forma_pagamento" required>
+                <option value="">Selecione...</option>
+                <option>PIX</option>
+                <option>Transferencia Bancaria</option>
+                <option>Boleto</option>
+                <option>Cartao De Debito</option>
+                <option>Cartao De Credito</option>
+                <option>Dinheiro</option>
+                <option>Cheque</option>
+                <option>Outro</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Favorecido</label>
+              <input type="text" id="l_favorecido" placeholder="Nome do beneficiario..." />
+            </div>
+
+            <div class="form-group full">
+              <label>Comprovante (PDF / Imagem, max. 20MB)</label>
+              <div class="dropzone" id="dzLancamento">
+                <input type="file" id="l_comprovante" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.bmp" data-nocap />
+                <div class="dz-icon">📎</div>
+                <div class="dz-text">Arraste o arquivo aqui ou <strong>clique para selecionar</strong></div>
+                <div id="dzLancamentoPreview"></div>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>Observacoes</label>
+              <textarea id="l_observacoes" placeholder="Observacoes adicionais..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="margin-top:20px;">
+            <button type="button" class="btn btn-ghost" onclick="resetLancamentoForm()">Limpar</button>
+            <button type="submit" class="btn btn-primary">Salvar Lancamento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── CUSTOS ─── -->
+    <div class="tab-panel" id="tab-custos">
+      <div class="page-title">📋 Custos <small id="custosImovelLabel"></small></div>
+      <div class="filter-bar">
+        <select id="filtroNicho" onchange="renderCustos()">
+          <option value="">Todos os nichos</option>
+          <option>Arrematacao</option>
+          <option>Comissao De Leiloeiro</option>
+          <option>Documentacao</option>
+          <option>Cartorio / Registro</option>
+          <option>Burocracia</option>
+          <option>Juridico</option>
+          <option>Impostos / ITBI</option>
+          <option>Desocupacao</option>
+          <option>Obra / Reforma</option>
+          <option>Taxas Administrativas</option>
+          <option>Outros</option>
+        </select>
+        <input type="text" id="filtroTexto" placeholder="Buscar..." oninput="renderCustos()" data-nocap />
+      </div>
+      <div class="table-wrap">
+        <table id="custosTable">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Nicho</th>
+              <th>Descricao</th>
+              <th>Favorecido</th>
+              <th>Pagamento</th>
+              <th>Comprovante</th>
+              <th class="text-right">Valor</th>
+              <th class="text-center">Acoes</th>
+            </tr>
+          </thead>
+          <tbody id="custosTbody"></tbody>
+          <tfoot id="custosTfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── HISTORICO ─── -->
+    <div class="tab-panel" id="tab-historico">
+      <div class="page-title">📅 Historico</div>
+      <div class="quick-filters">
+        <button class="qf-btn active" data-qf="all" onclick="setQF(this,'all')">Tudo</button>
+        <button class="qf-btn" data-qf="today" onclick="setQF(this,'today')">Hoje</button>
+        <button class="qf-btn" data-qf="week" onclick="setQF(this,'week')">Esta Semana</button>
+        <button class="qf-btn" data-qf="month" onclick="setQF(this,'month')">Este Mes</button>
+      </div>
+      <div class="filter-bar">
+        <div class="date-range">
+          <span>De:</span>
+          <input type="date" id="histDe" onchange="renderHistorico()" />
+          <span>Ate:</span>
+          <input type="date" id="histAte" onchange="renderHistorico()" />
+        </div>
+        <select id="histImovel" onchange="renderHistorico()">
+          <option value="">Todos os imoveis</option>
+        </select>
+      </div>
+      <div id="timelineContainer"></div>
+    </div>
+
+    <!-- ─── DOCUMENTOS ─── -->
+    <div class="tab-panel" id="tab-documentos">
+      <div class="page-title">📁 Documentos</div>
+      <div class="filter-bar">
+        <select id="docImovelFilter" onchange="renderDocumentos()">
+          <option value="">Todos os imoveis</option>
+        </select>
+        <select id="docNichoFilter" onchange="renderDocumentos()">
+          <option value="">Todos os nichos</option>
+          <option>Arrematacao</option>
+          <option>Comissao De Leiloeiro</option>
+          <option>Documentacao</option>
+          <option>Cartorio / Registro</option>
+          <option>Burocracia</option>
+          <option>Juridico</option>
+          <option>Impostos / ITBI</option>
+          <option>Desocupacao</option>
+          <option>Obra / Reforma</option>
+          <option>Taxas Administrativas</option>
+          <option>Outros</option>
+        </select>
+        <select id="docTipoFilter" onchange="renderDocumentos()">
+          <option value="">Todos os tipos</option>
+          <option value="pdf">PDF</option>
+          <option value="image">Imagem</option>
+        </select>
+        <input type="text" id="docTextoFilter" placeholder="Buscar..." oninput="renderDocumentos()" data-nocap />
+      </div>
+      <div id="docsContainer"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── MODAL: NOVO IMOVEL ─── -->
+<div class="modal-backdrop hidden" id="modalNovoImovel" onclick="backdropClose(event,'modalNovoImovel')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">🏠 Novo Imovel</div>
+      <button class="modal-close" onclick="closeModal('modalNovoImovel')">&#x2715;</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nome do Imovel <span class="required-mark">*</span></label>
+        <input type="text" id="im_nome" placeholder="Ex: Apto 302 – Rua das Flores" />
+      </div>
+      <div class="form-group">
+        <label>Rua / Logradouro</label>
+        <input type="text" id="im_rua" placeholder="Rua, Av., etc." />
+      </div>
+      <div class="form-group">
+        <label>Numero</label>
+        <input type="text" id="im_numero" placeholder="No" data-nocap />
+      </div>
+      <div class="form-group">
+        <label>Complemento</label>
+        <input type="text" id="im_complemento" placeholder="Apto, Sala, Bloco..." />
+      </div>
+      <div class="form-group">
+        <label>CEP</label>
+        <input type="text" id="im_cep" placeholder="00000-000" data-nocap />
+      </div>
+      <div class="form-group">
+        <label>Data de Arrematacao</label>
+        <input type="date" id="im_data_arrematacao" />
+      </div>
+      <div class="form-group full">
+        <label>Observacoes</label>
+        <textarea id="im_obs" placeholder="Notas sobre o imovel..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalNovoImovel')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarImovel()">Salvar Imovel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: EDITAR CUSTO ─── -->
+<div class="modal-backdrop hidden" id="modalEditCusto" onclick="backdropClose(event,'modalEditCusto')">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Editar Custo</div>
+      <button class="modal-close" onclick="closeModal('modalEditCusto')">&#x2715;</button>
+    </div>
+    <input type="hidden" id="edit_id" />
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nicho <span class="required-mark">*</span></label>
+        <select id="edit_nicho" required>
+          <option>Arrematacao</option>
+          <option>Comissao De Leiloeiro</option>
+          <option>Documentacao</option>
+          <option>Cartorio / Registro</option>
+          <option>Burocracia</option>
+          <option>Juridico</option>
+          <option>Impostos / ITBI</option>
+          <option>Desocupacao</option>
+          <option>Obra / Reforma</option>
+          <option>Taxas Administrativas</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor R$ <span class="required-mark">*</span></label>
+        <input type="text" id="edit_valor" data-nocap required />
+      </div>
+      <div class="form-group full">
+        <label>Descricao <span class="required-mark">*</span></label>
+        <input type="text" id="edit_descricao" required />
+      </div>
+      <div class="form-group">
+        <label>Data do Pagamento <span class="required-mark">*</span></label>
+        <input type="date" id="edit_data_pagamento" required />
+      </div>
+      <div class="form-group">
+        <label>Forma de Pagamento <span class="required-mark">*</span></label>
+        <select id="edit_forma_pagamento" required>
+          <option>PIX</option>
+          <option>Transferencia Bancaria</option>
+          <option>Boleto</option>
+          <option>Cartao De Debito</option>
+          <option>Cartao De Credito</option>
+          <option>Dinheiro</option>
+          <option>Cheque</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Favorecido</label>
+        <input type="text" id="edit_favorecido" />
+      </div>
+      <div class="form-group full">
+        <label>Novo Comprovante (deixe vazio para manter o atual)</label>
+        <div class="dropzone" id="dzEdit">
+          <input type="file" id="edit_comprovante" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.bmp" data-nocap />
+          <div class="dz-icon">📎</div>
+          <div class="dz-text">Arraste ou <strong>clique para selecionar</strong></div>
+          <div id="dzEditPreview"></div>
+        </div>
+        <div id="edit_comprovante_atual" class="mt-1" style="font-size:12px;color:var(--text-muted)"></div>
+      </div>
+      <div class="form-group full">
+        <label>Observacoes</label>
+        <textarea id="edit_observacoes"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalEditCusto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicao()">Salvar Alteracoes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ═══ STATE ═══════════════════════════════════════════════════════════════════
+let allImoveis = [];
+let allCustosMap = {};
+let currentView = 'grid';
+let currentQF = 'all';
+
+// ═══ NICHO COLORS ════════════════════════════════════════════════════════════
+const NICHO_COLORS = {
+  'Arrematacao':           { bg: '#dbeafe', fg: '#1e40af' },
+  'Comissao De Leiloeiro': { bg: '#fce7f3', fg: '#9d174d' },
+  'Documentacao':          { bg: '#fef3c7', fg: '#92400e' },
+  'Cartorio / Registro':   { bg: '#d1fae5', fg: '#065f46' },
+  'Burocracia':            { bg: '#f3e8ff', fg: '#5b21b6' },
+  'Juridico':              { bg: '#ffedd5', fg: '#9a3412' },
+  'Impostos / ITBI':       { bg: '#fee2e2', fg: '#991b1b' },
+  'Desocupacao':           { bg: '#fef9c3', fg: '#713f12' },
+  'Obra / Reforma':        { bg: '#cffafe', fg: '#164e63' },
+  'Taxas Administrativas': { bg: '#e0e7ff', fg: '#3730a3' },
+  'Outros':                { bg: '#f1f5f9', fg: '#475569' },
+};
+
+function nichoBadge(nicho) {
+  const c = NICHO_COLORS[nicho] || NICHO_COLORS['Outros'];
+  return `<span class="badge" style="background:${c.bg};color:${c.fg}">${nicho}</span>`;
+}
+
+// ═══ CURRENCY ════════════════════════════════════════════════════════════════
+function formatBRL(value) {
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
+}
+function parseBRL(str) {
+  if (!str) return 0;
+  return parseFloat(str.replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
+}
+function applyCurrencyMask(input) {
+  input.addEventListener('input', function() {
+    let raw = this.value.replace(/\D/g, '');
+    if (!raw) { this.value = ''; return; }
+    this.value = formatBRL(parseInt(raw, 10) / 100);
+  });
+}
+
+// ═══ AUTO CAPITALIZE ═════════════════════════════════════════════════════════
+document.addEventListener('input', function(e) {
+  const el = e.target;
+  if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return;
+  if (el.dataset.nocap !== undefined) return;
+  if (['date','number','file','email','password','tel','url'].includes(el.type)) return;
+  const sel = el.selectionStart;
+  el.value = el.value.replace(/\b\w/g, l => l.toUpperCase());
+  try { el.setSelectionRange(sel, sel); } catch(_) {}
+});
+
+// ═══ USER INIT ═══════════════════════════════════════════════════════════════
+(function initUser() {
+  const name = document.getElementById('userName').textContent.trim();
+  if (name) document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+})();
+
+async function doLogout() {
+  try { await fetch('/api/auth/logout', { method: 'POST' }); } finally {
+    window.location.href = '/login';
+  }
+}
+
+// ═══ TOAST ═══════════════════════════════════════════════════════════════════
+function toast(msg, type = 'success') {
+  const ct = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  ct.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'toastOut .3s ease forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+// ═══ MODALS ══════════════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function backdropClose(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+function openNovoImovelModal() {
+  ['im_nome','im_rua','im_numero','im_complemento','im_cep','im_data_arrematacao','im_obs']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  openModal('modalNovoImovel');
+}
+
+// ═══ API ═════════════════════════════════════════════════════════════════════
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, opts);
+  if (res.status === 401) { window.location.href = '/login'; return; }
+  if (!res.ok) {
+    let msg = 'Erro desconhecido';
+    try { const j = await res.json(); msg = j.error || msg; } catch(_) {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+// ═══ LOAD DATA ═══════════════════════════════════════════════════════════════
+async function loadAll() {
+  allImoveis = await apiFetch('/api/imoveis');
+  if (!allImoveis) return;
+  allCustosMap = {};
+  for (const im of allImoveis) {
+    allCustosMap[im.id] = await apiFetch(`/api/custos/${im.id}`);
+  }
+  populateImovelSelects();
+  renderDashboard();
+  renderCustos();
+  renderHistorico();
+  renderDocumentos();
+}
+
+function populateImovelSelects() {
+  ['#globalImovelSelect', '#histImovel', '#docImovelFilter'].forEach(sel => {
+    const el = document.querySelector(sel);
+    const current = el.value;
+    while (el.options.length > 1) el.remove(1);
+    allImoveis.forEach(im => el.appendChild(new Option(im.nome, im.id)));
+    if (current) el.value = current;
+  });
+}
+
+// ═══ NAVIGATION ══════════════════════════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+    if (item.dataset.tab === 'custos') renderCustos();
+    if (item.dataset.tab === 'historico') renderHistorico();
+    if (item.dataset.tab === 'documentos') renderDocumentos();
+  });
+});
+
+function goToTab(tabName, imovelId) {
+  if (imovelId) document.getElementById('globalImovelSelect').value = imovelId;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tabName));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabName));
+  if (tabName === 'custos') renderCustos();
+}
+
+// ═══ VIEW TOGGLE ═════════════════════════════════════════════════════════════
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewGrid').classList.toggle('active', v === 'grid');
+  document.getElementById('viewList').classList.toggle('active', v === 'list');
+  renderDashboard();
+}
+
+// ═══ DASHBOARD ═══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  let totalAll = 0, lancsAll = 0, compAll = 0;
+  allImoveis.forEach(im => {
+    const cs = allCustosMap[im.id] || [];
+    totalAll += cs.reduce((s, c) => s + (c.valor || 0), 0);
+    lancsAll += cs.length;
+    compAll += cs.filter(c => c.comprovante_path).length;
+  });
+  document.getElementById('gtTotal').textContent = 'R$ ' + formatBRL(totalAll);
+  document.getElementById('gtImoveis').textContent = allImoveis.length;
+  document.getElementById('gtLancamentos').textContent = lancsAll;
+  document.getElementById('gtComprovantes').textContent = compAll;
+
+  const container = document.getElementById('propsContainer');
+  if (!allImoveis.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏠</div><h3>Nenhum imovel cadastrado</h3><p>Clique em "+ Novo Imovel" para comecar.</p></div>`;
+  } else {
+    const cls = currentView === 'grid' ? 'props-grid' : 'props-list';
+    let html = `<div class="${cls}">`;
+    allImoveis.forEach(im => {
+      const cs = allCustosMap[im.id] || [];
+      const total = cs.reduce((s, c) => s + (c.valor || 0), 0);
+      const numDocs = cs.filter(c => c.comprovante_path).length;
+      const nichoMap = {};
+      cs.forEach(c => { nichoMap[c.nicho] = (nichoMap[c.nicho] || 0) + c.valor; });
+      const top3 = Object.entries(nichoMap).sort((a,b) => b[1]-a[1]).slice(0,3);
+      const maxVal = top3.length ? top3[0][1] : 1;
+      const addrParts = [im.rua, im.numero && `No ${im.numero}`, im.complemento, im.cep && `CEP ${im.cep}`].filter(Boolean);
+      const addr = addrParts.join(', ') || 'Sem endereco cadastrado';
+      const miniBars = top3.map(([n, v]) =>
+        `<div class="mini-bar-item">
+          <div class="bar-label" title="${n}">${n}</div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(v/maxVal*100).toFixed(0)}%"></div></div>
+          <div class="mini-bar-val">R$ ${formatBRL(v)}</div>
+        </div>`).join('');
+      if (currentView === 'grid') {
+        html += `<div class="prop-card" onclick="goToTab('custos','${im.id}')">
+          <div class="prop-name">${escHtml(im.nome)}</div>
+          <div class="prop-addr">${escHtml(addr)}</div>
+          <div class="prop-total">R$ ${formatBRL(total)}</div>
+          <div class="prop-meta"><span>📋 ${cs.length} lancamentos</span><span>📎 ${numDocs} comprovantes</span></div>
+          ${top3.length ? `<div class="mini-bar-list">${miniBars}</div>` : ''}
+        </div>`;
+      } else {
+        html += `<div class="prop-card prop-card-list" onclick="goToTab('custos','${im.id}')">
+          <div style="flex:1"><div class="prop-name">${escHtml(im.nome)}</div><div class="prop-addr">${escHtml(addr)}</div></div>
+          <div style="text-align:right">
+            <div class="prop-total" style="font-size:18px">R$ ${formatBRL(total)}</div>
+            <div class="prop-meta" style="justify-content:flex-end"><span>📋 ${cs.length}</span><span>📎 ${numDocs}</span></div>
+          </div>
+        </div>`;
+      }
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  const nichoAll = {};
+  allImoveis.forEach(im => {
+    (allCustosMap[im.id] || []).forEach(c => { nichoAll[c.nicho] = (nichoAll[c.nicho] || 0) + c.valor; });
+  });
+  const sorted = Object.entries(nichoAll).sort((a,b) => b[1]-a[1]);
+  const sumEl = document.getElementById('nichoSummaryAll');
+  if (!sorted.length) {
+    sumEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Nenhum lancamento registrado.</div>';
+  } else {
+    sumEl.innerHTML = sorted.map(([n, v]) => {
+      const c = NICHO_COLORS[n] || NICHO_COLORS['Outros'];
+      return `<div class="nicho-item" style="background:${c.bg}">
+        <span class="nicho-name" style="color:${c.fg}">${n}</span>
+        <span class="nicho-val" style="color:${c.fg}">R$ ${formatBRL(v)}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ═══ IMOVEL FORM ═════════════════════════════════════════════════════════════
+async function salvarImovel() {
+  const nome = document.getElementById('im_nome').value.trim();
+  if (!nome) { toast('Nome do imovel e obrigatorio', 'error'); return; }
+  try {
+    const data = {
+      nome,
+      rua: document.getElementById('im_rua').value.trim(),
+      numero: document.getElementById('im_numero').value.trim(),
+      complemento: document.getElementById('im_complemento').value.trim(),
+      cep: document.getElementById('im_cep').value.trim(),
+      data_arrematacao: document.getElementById('im_data_arrematacao').value,
+      obs: document.getElementById('im_obs').value.trim(),
+    };
+    await apiFetch('/api/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    closeModal('modalNovoImovel');
+    toast('Imovel cadastrado com sucesso!');
+    await loadAll();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══ LANCAMENTO FORM ═════════════════════════════════════════════════════════
+function resetLancamentoForm() {
+  document.getElementById('lancamentoForm').reset();
+  document.getElementById('dzLancamentoPreview').innerHTML = '';
+}
+
+async function submitLancamento(e) {
+  e.preventDefault();
+  const imovelId = document.getElementById('globalImovelSelect').value;
+  if (!imovelId) { toast('Selecione um imovel no cabecalho primeiro', 'error'); return; }
+  const valor = parseBRL(document.getElementById('l_valor').value);
+  if (!valor) { toast('Informe um valor valido', 'error'); return; }
+  const fd = new FormData();
+  fd.append('imovel_id', imovelId);
+  fd.append('nicho', document.getElementById('l_nicho').value);
+  fd.append('descricao', document.getElementById('l_descricao').value.trim());
+  fd.append('valor', valor);
+  fd.append('data_pagamento', document.getElementById('l_data_pagamento').value);
+  fd.append('forma_pagamento', document.getElementById('l_forma_pagamento').value);
+  fd.append('favorecido', document.getElementById('l_favorecido').value.trim());
+  fd.append('observacoes', document.getElementById('l_observacoes').value.trim());
+  const fileInput = document.getElementById('l_comprovante');
+  if (fileInput.files[0]) fd.append('comprovante', fileInput.files[0]);
+  try {
+    await apiFetch('/api/custos', { method: 'POST', body: fd });
+    toast('Lancamento salvo com sucesso!');
+    resetLancamentoForm();
+    await loadAll();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══ CUSTOS TABLE ═════════════════════════════════════════════════════════════
+function renderCustos() {
+  const imovelId = document.getElementById('globalImovelSelect').value;
+  const filtroNicho = document.getElementById('filtroNicho').value;
+  const filtroTexto = document.getElementById('filtroTexto').value.toLowerCase();
+  const label = document.getElementById('custosImovelLabel');
+  let custos = [];
+  if (imovelId) {
+    label.textContent = '— ' + (allImoveis.find(i => i.id === imovelId)?.nome || '');
+    custos = allCustosMap[imovelId] || [];
+  } else {
+    label.textContent = '— Todos os Imoveis';
+    allImoveis.forEach(im => { custos = custos.concat(allCustosMap[im.id] || []); });
+  }
+  if (filtroNicho) custos = custos.filter(c => c.nicho === filtroNicho);
+  if (filtroTexto) custos = custos.filter(c =>
+    (c.descricao||'').toLowerCase().includes(filtroTexto) ||
+    (c.favorecido||'').toLowerCase().includes(filtroTexto) ||
+    (c.nicho||'').toLowerCase().includes(filtroTexto)
+  );
+  const tbody = document.getElementById('custosTbody');
+  const tfoot = document.getElementById('custosTfoot');
+  if (!custos.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state" style="padding:40px"><div class="empty-icon">📋</div><h3>Nenhum custo encontrado</h3></div></td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+  const total = custos.reduce((s, c) => s + (c.valor || 0), 0);
+  tbody.innerHTML = custos.map(c => {
+    const compLink = c.comprovante_path
+      ? `<a class="comp-link" href="/uploads/${c.comprovante_path}" target="_blank">📎 ${escHtml(c.comprovante_nome || 'Ver')}</a>`
+      : `<span class="no-comp">—</span>`;
+    const dateFormatted = c.data_pagamento ? c.data_pagamento.split('-').reverse().join('/') : '—';
+    return `<tr>
+      <td>${dateFormatted}</td>
+      <td>${nichoBadge(c.nicho)}</td>
+      <td>${escHtml(c.descricao)}</td>
+      <td>${escHtml(c.favorecido || '—')}</td>
+      <td>${escHtml(c.forma_pagamento)}</td>
+      <td>${compLink}</td>
+      <td class="text-right font-bold">R$ ${formatBRL(c.valor)}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-xs" onclick="openEditModal('${c.id}')" title="Editar">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteCusto('${c.id}')" title="Excluir">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  tfoot.innerHTML = `<tr>
+    <td colspan="6" class="text-right">Total (${custos.length} lancamentos)</td>
+    <td class="text-right">R$ ${formatBRL(total)}</td>
+    <td></td>
+  </tr>`;
+}
+
+// ═══ EDIT MODAL ══════════════════════════════════════════════════════════════
+function openEditModal(id) {
+  let custo = null;
+  for (const cs of Object.values(allCustosMap)) {
+    custo = cs.find(c => c.id === id);
+    if (custo) break;
+  }
+  if (!custo) { toast('Custo nao encontrado', 'error'); return; }
+  document.getElementById('edit_id').value = custo.id;
+  document.getElementById('edit_nicho').value = custo.nicho;
+  document.getElementById('edit_valor').value = formatBRL(custo.valor);
+  document.getElementById('edit_descricao').value = custo.descricao;
+  document.getElementById('edit_data_pagamento').value = custo.data_pagamento;
+  document.getElementById('edit_forma_pagamento').value = custo.forma_pagamento;
+  document.getElementById('edit_favorecido').value = custo.favorecido || '';
+  document.getElementById('edit_observacoes').value = custo.observacoes || '';
+  document.getElementById('edit_comprovante').value = '';
+  document.getElementById('dzEditPreview').innerHTML = '';
+  document.getElementById('edit_comprovante_atual').textContent =
+    custo.comprovante_nome ? `Comprovante atual: ${custo.comprovante_nome}` : 'Sem comprovante atual.';
+  openModal('modalEditCusto');
+}
+
+async function salvarEdicao() {
+  const id = document.getElementById('edit_id').value;
+  const valor = parseBRL(document.getElementById('edit_valor').value);
+  if (!valor) { toast('Informe um valor valido', 'error'); return; }
+  const fd = new FormData();
+  fd.append('nicho', document.getElementById('edit_nicho').value);
+  fd.append('descricao', document.getElementById('edit_descricao').value.trim());
+  fd.append('valor', valor);
+  fd.append('data_pagamento', document.getElementById('edit_data_pagamento').value);
+  fd.append('forma_pagamento', document.getElementById('edit_forma_pagamento').value);
+  fd.append('favorecido', document.getElementById('edit_favorecido').value.trim());
+  fd.append('observacoes', document.getElementById('edit_observacoes').value.trim());
+  const fileInput = document.getElementById('edit_comprovante');
+  if (fileInput.files[0]) fd.append('comprovante', fileInput.files[0]);
+  try {
+    await apiFetch(`/api/custos/${id}`, { method: 'PUT', body: fd });
+    closeModal('modalEditCusto');
+    toast('Custo atualizado com sucesso!');
+    await loadAll();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteCusto(id) {
+  if (!confirm('Confirmar exclusao deste custo?')) return;
+  try {
+    await apiFetch(`/api/custos/${id}`, { method: 'DELETE' });
+    toast('Custo excluido.');
+    await loadAll();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══ HISTORICO ═══════════════════════════════════════════════════════════════
+function setQF(btn, qf) {
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentQF = qf;
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  let de = '', ate = '';
+  if (qf === 'today') { de = ate = fmt(today); }
+  else if (qf === 'week') {
+    const start = new Date(today); start.setDate(today.getDate() - today.getDay());
+    const end = new Date(start); end.setDate(start.getDate() + 6);
+    de = fmt(start); ate = fmt(end);
+  } else if (qf === 'month') {
+    de = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+    ate = fmt(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+  }
+  document.getElementById('histDe').value = de;
+  document.getElementById('histAte').value = ate;
+  renderHistorico();
+}
+
+function renderHistorico() {
+  const de = document.getElementById('histDe').value;
+  const ate = document.getElementById('histAte').value;
+  const histImovel = document.getElementById('histImovel').value;
+  let allCs = [];
+  allImoveis.forEach(im => {
+    if (histImovel && im.id !== histImovel) return;
+    (allCustosMap[im.id] || []).forEach(c => allCs.push({ ...c, _imovelNome: im.nome }));
+  });
+  if (de) allCs = allCs.filter(c => c.data_pagamento >= de);
+  if (ate) allCs = allCs.filter(c => c.data_pagamento <= ate);
+  const grouped = {};
+  allCs.forEach(c => {
+    const d = c.data_pagamento || 'Sem data';
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(c);
+  });
+  const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+  const container = document.getElementById('timelineContainer');
+  if (!sortedDates.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><h3>Nenhum lancamento no periodo</h3></div>`;
+    return;
+  }
+  container.innerHTML = sortedDates.map(d => {
+    const cs = grouped[d];
+    const dayTotal = cs.reduce((s, c) => s + (c.valor || 0), 0);
+    const entries = cs.map(c => {
+      const regTime = c.registrado_em ? new Date(c.registrado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const compLink = c.comprovante_path ? `<a class="comp-link" href="/uploads/${c.comprovante_path}" target="_blank">📎 ${escHtml(c.comprovante_nome || 'Ver')}</a>` : '';
+      return `<div class="timeline-entry">
+        <div class="timeline-time">${regTime}</div>
+        <div class="timeline-body">
+          <div class="t-desc">${escHtml(c.descricao)}</div>
+          <div class="t-meta">${nichoBadge(c.nicho)} &nbsp;${escHtml(c._imovelNome)} &nbsp;· ${escHtml(c.forma_pagamento)}${c.favorecido ? ` &nbsp;· ${escHtml(c.favorecido)}` : ''}${compLink ? ` &nbsp;· ${compLink}` : ''}</div>
+        </div>
+        <div class="timeline-value">R$ ${formatBRL(c.valor)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="timeline-day">
+      <div class="timeline-day-header">
+        <span>${formatDate(d)}</span>
+        <span class="timeline-day-total">R$ ${formatBRL(dayTotal)}</span>
+      </div>
+      ${entries}
+    </div>`;
+  }).join('');
+}
+
+// ═══ DOCUMENTOS ══════════════════════════════════════════════════════════════
+function renderDocumentos() {
+  const imovelF = document.getElementById('docImovelFilter').value;
+  const nichoF = document.getElementById('docNichoFilter').value;
+  const tipoF = document.getElementById('docTipoFilter').value;
+  const textoF = document.getElementById('docTextoFilter').value.toLowerCase();
+  const container = document.getElementById('docsContainer');
+  let html = '', anyDocs = false;
+  allImoveis.forEach(im => {
+    if (imovelF && im.id !== imovelF) return;
+    let cs = (allCustosMap[im.id] || []).filter(c => c.comprovante_path);
+    if (nichoF) cs = cs.filter(c => c.nicho === nichoF);
+    if (tipoF === 'pdf') cs = cs.filter(c => (c.comprovante_tipo || '').includes('pdf'));
+    if (tipoF === 'image') cs = cs.filter(c => (c.comprovante_tipo || '').match(/image/));
+    if (textoF) cs = cs.filter(c =>
+      (c.descricao||'').toLowerCase().includes(textoF) ||
+      (c.comprovante_nome||'').toLowerCase().includes(textoF) ||
+      (c.nicho||'').toLowerCase().includes(textoF)
+    );
+    if (!cs.length) return;
+    anyDocs = true;
+    html += `<div class="docs-section-header"><span>🏠 ${escHtml(im.nome)}</span><span style="font-size:12px;opacity:.75">${cs.length} doc${cs.length!==1?'s':''}</span></div><div class="docs-grid">`;
+    cs.forEach(c => {
+      const isPdf = (c.comprovante_tipo||'').includes('pdf');
+      const dateFormatted = c.data_pagamento ? c.data_pagamento.split('-').reverse().join('/') : '—';
+      html += `<div class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-icon">${isPdf ? '📄' : '🖼️'}</div>
+          <div><div class="doc-fname" title="${escHtml(c.comprovante_nome||'')}">${escHtml(c.comprovante_nome||'Arquivo')}</div>${nichoBadge(c.nicho)}</div>
+        </div>
+        <div class="doc-desc">${escHtml(c.descricao)}</div>
+        <div class="doc-meta"><span>📅 ${dateFormatted}</span><span>💳 ${escHtml(c.forma_pagamento)}</span><span>R$ ${formatBRL(c.valor)}</span></div>
+        <div class="doc-footer"><a class="btn btn-accent btn-sm" href="/uploads/${c.comprovante_path}" target="_blank">Ver / Baixar</a></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!anyDocs) html = `<div class="empty-state"><div class="empty-icon">📁</div><h3>Nenhum documento encontrado</h3><p>Comprovantes aparecem aqui quando adicionados nos lancamentos.</p></div>`;
+  container.innerHTML = html;
+}
+
+// ═══ EXCEL EXPORT ════════════════════════════════════════════════════════════
+async function exportarExcelAll() {
+  if (!allImoveis.length) { toast('Nenhum imovel para exportar', 'error'); return; }
+  const a = document.createElement('a');
+  a.href = '/api/export/excel/all';
+  a.download = 'custos_arrematacao.xlsx';
+  a.click();
+  toast('Exportacao iniciada!', 'info');
+}
+
+// ═══ DROPZONE ════════════════════════════════════════════════════════════════
+function setupDropzone(dzId, inputId, previewId) {
+  const dz = document.getElementById(dzId);
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); input.files = dt.files;
+      showFilePreview(preview, e.dataTransfer.files[0], input);
+    }
+  });
+  input.addEventListener('change', () => { if (input.files[0]) showFilePreview(preview, input.files[0], input); });
+}
+
+function showFilePreview(previewEl, file, input) {
+  const size = (file.size / 1024).toFixed(0);
+  previewEl.innerHTML = `<div class="dz-preview">
+    <span style="font-size:20px">${file.type.includes('pdf') ? '📄' : '🖼️'}</span>
+    <span class="dz-fname">${escHtml(file.name)} (${size} KB)</span>
+    <button class="dz-remove" type="button" onclick="clearFile(this,'${input.id}','${previewEl.id}')">✕</button>
+  </div>`;
+}
+
+function clearFile(btn, inputId, previewId) {
+  document.getElementById(inputId).value = '';
+  document.getElementById(previewId).innerHTML = '';
+}
+
+// ═══ UTILS ═══════════════════════════════════════════════════════════════════
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(isoDate) {
+  if (!isoDate || isoDate === 'Sem data') return isoDate || '—';
+  const [y, m, d] = isoDate.split('-');
+  const months = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${parseInt(d)} de ${months[parseInt(m)-1]} de ${y}`;
+}
+
+// ═══ INIT ════════════════════════════════════════════════════════════════════
+applyCurrencyMask(document.getElementById('l_valor'));
+applyCurrencyMask(document.getElementById('edit_valor'));
+setupDropzone('dzLancamento', 'l_comprovante', 'dzLancamentoPreview');
+setupDropzone('dzEdit', 'edit_comprovante', 'dzEditPreview');
+document.getElementById('l_data_pagamento').value = new Date().toISOString().split('T')[0];
+document.getElementById('globalImovelSelect').addEventListener('change', () => {
+  renderCustos(); renderHistorico(); renderDocumentos();
+});
+loadAll();
+</script>
+</body>
+</html>
