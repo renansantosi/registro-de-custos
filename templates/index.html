@@ -494,6 +494,16 @@
   .date-range input { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; }
   .date-range span { color: var(--text-muted); font-size: 12px; }
 
+  /* ─── FOOTER ─── */
+  .app-footer {
+    margin-top: 40px; padding: 20px 0 8px;
+    border-top: 1px solid var(--border);
+    text-align: center; font-size: 12px; color: #94a3b8;
+    line-height: 2;
+  }
+  .app-footer a { color: #2563eb; text-decoration: none; margin: 0 8px; }
+  .app-footer a:hover { text-decoration: underline; }
+
   /* ─── BOTTOM NAV (mobile) ─── */
   .bottom-nav {
     display: none;
@@ -589,13 +599,13 @@
       <span class="icon">📊</span> Dashboard
     </div>
     <div class="nav-item" data-tab="lancamento">
-      <span class="icon">➕</span> Lancamento
+      <span class="icon">➕</span> Lançamento
     </div>
     <div class="nav-item" data-tab="custos">
       <span class="icon">📋</span> Custos
     </div>
     <div class="nav-item" data-tab="historico">
-      <span class="icon">📅</span> Historico
+      <span class="icon">📅</span> Histórico
     </div>
     <div class="nav-item" data-tab="documentos">
       <span class="icon">📁</span> Documentos
@@ -611,7 +621,7 @@
 
       <!-- Botoes visiveis so no mobile -->
       <div id="mobileActions" style="display:none;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="openNovoImovelModal()">+ Novo Imovel</button>
+        <button class="btn btn-primary btn-sm" onclick="openNovoImovelModal()">+ Novo Imóvel</button>
         <button class="btn btn-accent btn-sm" onclick="exportarExcelAll()">&#8659; Excel</button>
       </div>
 
@@ -619,15 +629,15 @@
         <div class="stat-card">
           <div class="stat-label">Total Investido</div>
           <div class="stat-value" id="gtTotal">R$ 0,00</div>
-          <div class="stat-sub">todos os imoveis</div>
+          <div class="stat-sub">todos os imóveis</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Imoveis</div>
+          <div class="stat-label">Imóveis</div>
           <div class="stat-value" id="gtImoveis">0</div>
           <div class="stat-sub">cadastrados</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Lancamentos</div>
+          <div class="stat-label">Lançamentos</div>
           <div class="stat-value" id="gtLancamentos">0</div>
           <div class="stat-sub">registrados</div>
         </div>
@@ -639,7 +649,7 @@
       </div>
 
       <div class="dash-toolbar">
-        <div class="page-title" style="margin-bottom:0">Imoveis</div>
+        <div class="page-title" style="margin-bottom:0">Imóveis</div>
         <div class="view-toggle">
           <button id="viewGrid" class="active" onclick="setView('grid')" title="Grade">&#8862;</button>
           <button id="viewList" onclick="setView('list')" title="Lista">&#9776;</button>
@@ -649,14 +659,14 @@
       <div id="propsContainer"></div>
 
       <div class="nicho-summary mt-2">
-        <h3>Subtotais Por Nicho — Todos os Imoveis</h3>
+        <h3>Subtotais Por Nicho — Todos os Imóveis</h3>
         <div class="nicho-grid" id="nichoSummaryAll"></div>
       </div>
     </div>
 
     <!-- ─── LANCAMENTO ─── -->
     <div class="tab-panel" id="tab-lancamento">
-      <div class="page-title">➕ Lancamento De Custos</div>
+      <div class="page-title">➕ Lançamento De Custos</div>
       <div class="card">
         <form id="lancamentoForm" onsubmit="submitLancamento(event)">
           <div class="form-grid">
@@ -665,14 +675,14 @@
               <label>Nicho <span class="required-mark">*</span></label>
               <select id="l_nicho" required>
                 <option value="">Selecione...</option>
-                <option>Arrematacao</option>
-                <option>Comissao De Leiloeiro</option>
-                <option>Documentacao</option>
-                <option>Cartorio / Registro</option>
+                <option>Arrematação</option>
+                <option>Comissão De Leiloeiro</option>
+                <option>Documentação</option>
+                <option>Cartório / Registro</option>
                 <option>Burocracia</option>
-                <option>Juridico</option>
+                <option>Jurídico</option>
                 <option>Impostos / ITBI</option>
-                <option>Desocupacao</option>
+                <option>Desocupação</option>
                 <option>Obra / Reforma</option>
                 <option>Taxas Administrativas</option>
                 <option>Outros</option>
@@ -685,7 +695,7 @@
             </div>
 
             <div class="form-group full">
-              <label>Descricao <span class="required-mark">*</span></label>
+              <label>Descrição <span class="required-mark">*</span></label>
               <input type="text" id="l_descricao" placeholder="Descreva o custo..." required />
             </div>
 
@@ -699,10 +709,10 @@
               <select id="l_forma_pagamento" required>
                 <option value="">Selecione...</option>
                 <option>PIX</option>
-                <option>Transferencia Bancaria</option>
+                <option>Transferência Bancária</option>
                 <option>Boleto</option>
-                <option>Cartao De Debito</option>
-                <option>Cartao De Credito</option>
+                <option>Cartão De Débito</option>
+                <option>Cartão De Crédito</option>
                 <option>Dinheiro</option>
                 <option>Cheque</option>
                 <option>Outro</option>
@@ -711,7 +721,7 @@
 
             <div class="form-group">
               <label>Favorecido</label>
-              <input type="text" id="l_favorecido" placeholder="Nome do beneficiario..." />
+              <input type="text" id="l_favorecido" placeholder="Nome do beneficiário..." />
             </div>
 
             <div class="form-group full">
@@ -725,14 +735,14 @@
             </div>
 
             <div class="form-group full">
-              <label>Observacoes</label>
-              <textarea id="l_observacoes" placeholder="Observacoes adicionais..."></textarea>
+              <label>Observações</label>
+              <textarea id="l_observacoes" placeholder="Observações adicionais..."></textarea>
             </div>
           </div>
 
           <div class="modal-footer" style="margin-top:20px;">
             <button type="button" class="btn btn-ghost" onclick="resetLancamentoForm()">Limpar</button>
-            <button type="submit" class="btn btn-primary">Salvar Lancamento</button>
+            <button type="submit" class="btn btn-primary">Salvar Lançamento</button>
           </div>
         </form>
       </div>
@@ -744,14 +754,14 @@
       <div class="filter-bar">
         <select id="filtroNicho" onchange="renderCustos()">
           <option value="">Todos os nichos</option>
-          <option>Arrematacao</option>
-          <option>Comissao De Leiloeiro</option>
-          <option>Documentacao</option>
-          <option>Cartorio / Registro</option>
+          <option>Arrematação</option>
+          <option>Comissão De Leiloeiro</option>
+          <option>Documentação</option>
+          <option>Cartório / Registro</option>
           <option>Burocracia</option>
-          <option>Juridico</option>
+          <option>Jurídico</option>
           <option>Impostos / ITBI</option>
-          <option>Desocupacao</option>
+          <option>Desocupação</option>
           <option>Obra / Reforma</option>
           <option>Taxas Administrativas</option>
           <option>Outros</option>
@@ -764,12 +774,12 @@
             <tr>
               <th>Data</th>
               <th>Nicho</th>
-              <th>Descricao</th>
+              <th>Descrição</th>
               <th>Favorecido</th>
               <th>Pagamento</th>
               <th>Comprovante</th>
               <th class="text-right">Valor</th>
-              <th class="text-center">Acoes</th>
+              <th class="text-center">Ações</th>
             </tr>
           </thead>
           <tbody id="custosTbody"></tbody>
@@ -780,12 +790,12 @@
 
     <!-- ─── HISTORICO ─── -->
     <div class="tab-panel" id="tab-historico">
-      <div class="page-title">📅 Historico</div>
+      <div class="page-title">📅 Histórico</div>
       <div class="quick-filters">
         <button class="qf-btn active" data-qf="all" onclick="setQF(this,'all')">Tudo</button>
         <button class="qf-btn" data-qf="today" onclick="setQF(this,'today')">Hoje</button>
         <button class="qf-btn" data-qf="week" onclick="setQF(this,'week')">Esta Semana</button>
-        <button class="qf-btn" data-qf="month" onclick="setQF(this,'month')">Este Mes</button>
+        <button class="qf-btn" data-qf="month" onclick="setQF(this,'month')">Este Mês</button>
       </div>
       <div class="filter-bar">
         <div class="date-range">
@@ -795,7 +805,7 @@
           <input type="date" id="histAte" onchange="renderHistorico()" />
         </div>
         <select id="histImovel" onchange="renderHistorico()">
-          <option value="">Todos os imoveis</option>
+          <option value="">Todos os imóveis</option>
         </select>
       </div>
       <div id="timelineContainer"></div>
@@ -806,18 +816,18 @@
       <div class="page-title">📁 Documentos</div>
       <div class="filter-bar">
         <select id="docImovelFilter" onchange="renderDocumentos()">
-          <option value="">Todos os imoveis</option>
+          <option value="">Todos os imóveis</option>
         </select>
         <select id="docNichoFilter" onchange="renderDocumentos()">
           <option value="">Todos os nichos</option>
-          <option>Arrematacao</option>
-          <option>Comissao De Leiloeiro</option>
-          <option>Documentacao</option>
-          <option>Cartorio / Registro</option>
+          <option>Arrematação</option>
+          <option>Comissão De Leiloeiro</option>
+          <option>Documentação</option>
+          <option>Cartório / Registro</option>
           <option>Burocracia</option>
-          <option>Juridico</option>
+          <option>Jurídico</option>
           <option>Impostos / ITBI</option>
-          <option>Desocupacao</option>
+          <option>Desocupação</option>
           <option>Obra / Reforma</option>
           <option>Taxas Administrativas</option>
           <option>Outros</option>
@@ -832,6 +842,15 @@
       <div id="docsContainer"></div>
     </div>
 
+    <footer class="app-footer">
+      <div>&copy; 2026 Registro Original de Custos &mdash; Uso pessoal e privado</div>
+      <div>
+        <a href="/terms" target="_blank">Termos de Uso</a>
+        <a href="/privacy" target="_blank">Política de Privacidade</a>
+        <a href="mailto:vribeirob11@gmail.com">Entre em Contato</a>
+      </div>
+    </footer>
+
   </main>
 </div>
 
@@ -839,12 +858,12 @@
 <div class="modal-backdrop hidden" id="modalNovoImovel" onclick="backdropClose(event,'modalNovoImovel')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">🏠 Novo Imovel</div>
+      <div class="modal-title">🏠 Novo Imóvel</div>
       <button class="modal-close" onclick="closeModal('modalNovoImovel')">&#x2715;</button>
     </div>
     <div class="form-grid">
       <div class="form-group full">
-        <label>Nome do Imovel <span class="required-mark">*</span></label>
+        <label>Nome do Imóvel <span class="required-mark">*</span></label>
         <input type="text" id="im_nome" placeholder="Ex: Apto 302 – Rua das Flores" />
       </div>
       <div class="form-group">
@@ -852,7 +871,7 @@
         <input type="text" id="im_rua" placeholder="Rua, Av., etc." />
       </div>
       <div class="form-group">
-        <label>Numero</label>
+        <label>Número</label>
         <input type="text" id="im_numero" placeholder="No" data-nocap />
       </div>
       <div class="form-group">
@@ -864,17 +883,17 @@
         <input type="text" id="im_cep" placeholder="00000-000" data-nocap />
       </div>
       <div class="form-group">
-        <label>Data de Arrematacao</label>
+        <label>Data de Arrematação</label>
         <input type="date" id="im_data_arrematacao" />
       </div>
       <div class="form-group full">
-        <label>Observacoes</label>
-        <textarea id="im_obs" placeholder="Notas sobre o imovel..."></textarea>
+        <label>Observações</label>
+        <textarea id="im_obs" placeholder="Notas sobre o imóvel..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalNovoImovel')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarImovel()">Salvar Imovel</button>
+      <button class="btn btn-primary" onclick="salvarImovel()">Salvar Imóvel</button>
     </div>
   </div>
 </div>
@@ -891,14 +910,14 @@
       <div class="form-group">
         <label>Nicho <span class="required-mark">*</span></label>
         <select id="edit_nicho" required>
-          <option>Arrematacao</option>
-          <option>Comissao De Leiloeiro</option>
-          <option>Documentacao</option>
-          <option>Cartorio / Registro</option>
+          <option>Arrematação</option>
+          <option>Comissão De Leiloeiro</option>
+          <option>Documentação</option>
+          <option>Cartório / Registro</option>
           <option>Burocracia</option>
-          <option>Juridico</option>
+          <option>Jurídico</option>
           <option>Impostos / ITBI</option>
-          <option>Desocupacao</option>
+          <option>Desocupação</option>
           <option>Obra / Reforma</option>
           <option>Taxas Administrativas</option>
           <option>Outros</option>
@@ -909,7 +928,7 @@
         <input type="text" id="edit_valor" data-nocap required />
       </div>
       <div class="form-group full">
-        <label>Descricao <span class="required-mark">*</span></label>
+        <label>Descrição <span class="required-mark">*</span></label>
         <input type="text" id="edit_descricao" required />
       </div>
       <div class="form-group">
@@ -920,10 +939,10 @@
         <label>Forma de Pagamento <span class="required-mark">*</span></label>
         <select id="edit_forma_pagamento" required>
           <option>PIX</option>
-          <option>Transferencia Bancaria</option>
+          <option>Transferência Bancária</option>
           <option>Boleto</option>
-          <option>Cartao De Debito</option>
-          <option>Cartao De Credito</option>
+          <option>Cartão De Débito</option>
+          <option>Cartão De Crédito</option>
           <option>Dinheiro</option>
           <option>Cheque</option>
           <option>Outro</option>
@@ -944,13 +963,13 @@
         <div id="edit_comprovante_atual" class="mt-1" style="font-size:12px;color:var(--text-muted)"></div>
       </div>
       <div class="form-group full">
-        <label>Observacoes</label>
+        <label>Observações</label>
         <textarea id="edit_observacoes"></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalEditCusto')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarEdicao()">Salvar Alteracoes</button>
+      <button class="btn btn-primary" onclick="salvarEdicao()">Salvar Alterações</button>
     </div>
   </div>
 </div>
@@ -967,7 +986,7 @@
     <span class="bnav-icon">📋</span><span>Custos</span>
   </div>
   <div class="bottom-nav-item" data-tab="historico">
-    <span class="bnav-icon">📅</span><span>Historico</span>
+    <span class="bnav-icon">📅</span><span>Histórico</span>
   </div>
   <div class="bottom-nav-item" data-tab="documentos">
     <span class="bnav-icon">📁</span><span>Docs</span>
@@ -1021,17 +1040,24 @@ let currentQF = 'all';
 
 // ═══ NICHO COLORS ════════════════════════════════════════════════════════════
 const NICHO_COLORS = {
+  'Arrematação':           { bg: '#dbeafe', fg: '#1e40af' },
+  'Comissão De Leiloeiro': { bg: '#fce7f3', fg: '#9d174d' },
+  'Documentação':          { bg: '#fef3c7', fg: '#92400e' },
+  'Cartório / Registro':   { bg: '#d1fae5', fg: '#065f46' },
+  'Burocracia':            { bg: '#f3e8ff', fg: '#5b21b6' },
+  'Jurídico':              { bg: '#ffedd5', fg: '#9a3412' },
+  'Impostos / ITBI':       { bg: '#fee2e2', fg: '#991b1b' },
+  'Desocupação':           { bg: '#fef9c3', fg: '#713f12' },
+  'Obra / Reforma':        { bg: '#cffafe', fg: '#164e63' },
+  'Taxas Administrativas': { bg: '#e0e7ff', fg: '#3730a3' },
+  'Outros':                { bg: '#f1f5f9', fg: '#475569' },
+  // aliases sem acento (compatibilidade com dados antigos no banco)
   'Arrematacao':           { bg: '#dbeafe', fg: '#1e40af' },
   'Comissao De Leiloeiro': { bg: '#fce7f3', fg: '#9d174d' },
   'Documentacao':          { bg: '#fef3c7', fg: '#92400e' },
   'Cartorio / Registro':   { bg: '#d1fae5', fg: '#065f46' },
-  'Burocracia':            { bg: '#f3e8ff', fg: '#5b21b6' },
   'Juridico':              { bg: '#ffedd5', fg: '#9a3412' },
-  'Impostos / ITBI':       { bg: '#fee2e2', fg: '#991b1b' },
   'Desocupacao':           { bg: '#fef9c3', fg: '#713f12' },
-  'Obra / Reforma':        { bg: '#cffafe', fg: '#164e63' },
-  'Taxas Administrativas': { bg: '#e0e7ff', fg: '#3730a3' },
-  'Outros':                { bg: '#f1f5f9', fg: '#475569' },
 };
 
 function nichoBadge(nicho) {
@@ -1183,7 +1209,7 @@ function renderDashboard() {
 
   const container = document.getElementById('propsContainer');
   if (!allImoveis.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏠</div><h3>Nenhum imovel cadastrado</h3><p>Clique em "+ Novo Imovel" para comecar.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏠</div><h3>Nenhum imóvel cadastrado</h3><p>Clique em "+ Novo Imóvel" para começar.</p></div>`;
   } else {
     const cls = currentView === 'grid' ? 'props-grid' : 'props-list';
     let html = `<div class="${cls}">`;
@@ -1196,7 +1222,7 @@ function renderDashboard() {
       const top3 = Object.entries(nichoMap).sort((a,b) => b[1]-a[1]).slice(0,3);
       const maxVal = top3.length ? top3[0][1] : 1;
       const addrParts = [im.rua, im.numero && `No ${im.numero}`, im.complemento, im.cep && `CEP ${im.cep}`].filter(Boolean);
-      const addr = addrParts.join(', ') || 'Sem endereco cadastrado';
+      const addr = addrParts.join(', ') || 'Sem endereço cadastrado';
       const miniBars = top3.map(([n, v]) =>
         `<div class="mini-bar-item">
           <div class="bar-label" title="${n}">${n}</div>
@@ -1208,7 +1234,7 @@ function renderDashboard() {
           <div class="prop-name">${escHtml(im.nome)}</div>
           <div class="prop-addr">${escHtml(addr)}</div>
           <div class="prop-total">R$ ${formatBRL(total)}</div>
-          <div class="prop-meta"><span>📋 ${cs.length} lancamentos</span><span>📎 ${numDocs} comprovantes</span></div>
+          <div class="prop-meta"><span>📋 ${cs.length} lançamentos</span><span>📎 ${numDocs} comprovantes</span></div>
           ${top3.length ? `<div class="mini-bar-list">${miniBars}</div>` : ''}
         </div>`;
       } else {
@@ -1232,7 +1258,7 @@ function renderDashboard() {
   const sorted = Object.entries(nichoAll).sort((a,b) => b[1]-a[1]);
   const sumEl = document.getElementById('nichoSummaryAll');
   if (!sorted.length) {
-    sumEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Nenhum lancamento registrado.</div>';
+    sumEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Nenhum lançamento registrado.</div>';
   } else {
     sumEl.innerHTML = sorted.map(([n, v]) => {
       const c = NICHO_COLORS[n] || NICHO_COLORS['Outros'];
@@ -1247,7 +1273,7 @@ function renderDashboard() {
 // ═══ IMOVEL FORM ═════════════════════════════════════════════════════════════
 async function salvarImovel() {
   const nome = document.getElementById('im_nome').value.trim();
-  if (!nome) { toast('Nome do imovel e obrigatorio', 'error'); return; }
+  if (!nome) { toast('Nome do imóvel é obrigatório', 'error'); return; }
   try {
     const data = {
       nome,
@@ -1260,7 +1286,7 @@ async function salvarImovel() {
     };
     await apiFetch('/api/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     closeModal('modalNovoImovel');
-    toast('Imovel cadastrado com sucesso!');
+    toast('Imóvel cadastrado com sucesso!');
     await loadAll();
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1274,9 +1300,9 @@ function resetLancamentoForm() {
 async function submitLancamento(e) {
   e.preventDefault();
   const imovelId = document.getElementById('globalImovelSelect').value;
-  if (!imovelId) { toast('Selecione um imovel no cabecalho primeiro', 'error'); return; }
+  if (!imovelId) { toast('Selecione um imóvel no cabeçalho primeiro', 'error'); return; }
   const valor = parseBRL(document.getElementById('l_valor').value);
-  if (!valor) { toast('Informe um valor valido', 'error'); return; }
+  if (!valor) { toast('Informe um valor válido', 'error'); return; }
   const fd = new FormData();
   fd.append('imovel_id', imovelId);
   fd.append('nicho', document.getElementById('l_nicho').value);
@@ -1290,7 +1316,7 @@ async function submitLancamento(e) {
   if (fileInput.files[0]) fd.append('comprovante', fileInput.files[0]);
   try {
     await apiFetch('/api/custos', { method: 'POST', body: fd });
-    toast('Lancamento salvo com sucesso!');
+    toast('Lançamento salvo com sucesso!');
     resetLancamentoForm();
     await loadAll();
   } catch(e) { toast(e.message, 'error'); }
@@ -1307,7 +1333,7 @@ function renderCustos() {
     label.textContent = '— ' + (allImoveis.find(i => i.id === imovelId)?.nome || '');
     custos = allCustosMap[imovelId] || [];
   } else {
-    label.textContent = '— Todos os Imoveis';
+    label.textContent = '— Todos os Imóveis';
     allImoveis.forEach(im => { custos = custos.concat(allCustosMap[im.id] || []); });
   }
   if (filtroNicho) custos = custos.filter(c => c.nicho === filtroNicho);
@@ -1344,7 +1370,7 @@ function renderCustos() {
     </tr>`;
   }).join('');
   tfoot.innerHTML = `<tr>
-    <td colspan="6" class="text-right">Total (${custos.length} lancamentos)</td>
+    <td colspan="6" class="text-right">Total (${custos.length} lançamentos)</td>
     <td class="text-right">R$ ${formatBRL(total)}</td>
     <td></td>
   </tr>`;
@@ -1357,7 +1383,7 @@ function openEditModal(id) {
     custo = cs.find(c => c.id === id);
     if (custo) break;
   }
-  if (!custo) { toast('Custo nao encontrado', 'error'); return; }
+  if (!custo) { toast('Custo não encontrado', 'error'); return; }
   document.getElementById('edit_id').value = custo.id;
   document.getElementById('edit_nicho').value = custo.nicho;
   document.getElementById('edit_valor').value = formatBRL(custo.valor);
@@ -1376,7 +1402,7 @@ function openEditModal(id) {
 async function salvarEdicao() {
   const id = document.getElementById('edit_id').value;
   const valor = parseBRL(document.getElementById('edit_valor').value);
-  if (!valor) { toast('Informe um valor valido', 'error'); return; }
+  if (!valor) { toast('Informe um valor válido', 'error'); return; }
   const fd = new FormData();
   fd.append('nicho', document.getElementById('edit_nicho').value);
   fd.append('descricao', document.getElementById('edit_descricao').value.trim());
@@ -1396,10 +1422,10 @@ async function salvarEdicao() {
 }
 
 async function deleteCusto(id) {
-  if (!confirm('Confirmar exclusao deste custo?')) return;
+  if (!confirm('Confirmar exclusão deste custo?')) return;
   try {
     await apiFetch(`/api/custos/${id}`, { method: 'DELETE' });
-    toast('Custo excluido.');
+    toast('Custo excluído.');
     await loadAll();
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -1446,7 +1472,7 @@ function renderHistorico() {
   const sortedDates = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
   const container = document.getElementById('timelineContainer');
   if (!sortedDates.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><h3>Nenhum lancamento no periodo</h3></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><h3>Nenhum lançamento no período</h3></div>`;
     return;
   }
   container.innerHTML = sortedDates.map(d => {
@@ -1511,18 +1537,18 @@ function renderDocumentos() {
     });
     html += '</div>';
   });
-  if (!anyDocs) html = `<div class="empty-state"><div class="empty-icon">📁</div><h3>Nenhum documento encontrado</h3><p>Comprovantes aparecem aqui quando adicionados nos lancamentos.</p></div>`;
+  if (!anyDocs) html = `<div class="empty-state"><div class="empty-icon">📁</div><h3>Nenhum documento encontrado</h3><p>Comprovantes aparecem aqui quando adicionados nos lançamentos.</p></div>`;
   container.innerHTML = html;
 }
 
 // ═══ EXCEL EXPORT ════════════════════════════════════════════════════════════
 async function exportarExcelAll() {
-  if (!allImoveis.length) { toast('Nenhum imovel para exportar', 'error'); return; }
+  if (!allImoveis.length) { toast('Nenhum imóvel para exportar', 'error'); return; }
   const a = document.createElement('a');
   a.href = '/api/export/excel/all';
   a.download = 'custos_arrematacao.xlsx';
   a.click();
-  toast('Exportacao iniciada!', 'info');
+  toast('Exportação iniciada!', 'info');
 }
 
 // ═══ DROPZONE ════════════════════════════════════════════════════════════════
@@ -1565,7 +1591,7 @@ function escHtml(str) {
 function formatDate(isoDate) {
   if (!isoDate || isoDate === 'Sem data') return isoDate || '—';
   const [y, m, d] = isoDate.split('-');
-  const months = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   return `${parseInt(d)} de ${months[parseInt(m)-1]} de ${y}`;
 }
 

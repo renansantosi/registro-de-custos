@@ -579,6 +579,16 @@ def export_excel_all():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/terms')
+def terms_page():
+    return render_template('terms.html')
+
+
+@app.route('/privacy')
+def privacy_page():
+    return render_template('privacy.html')
+
+
 if __name__ == '__main__':
     init_db(DB_PATH)
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)

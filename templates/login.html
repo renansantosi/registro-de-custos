@@ -151,10 +151,17 @@
   }
   .error-msg.show { display: block; }
 
+  .login-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    text-align: center; padding: 10px; font-size: 11px; color: #94a3b8;
+    background: #f8fafc; border-top: 1px solid #e2e8f0;
+  }
+  .login-footer a { color: #2563eb; text-decoration: none; margin: 0 6px; }
+
   @media (max-width: 800px) {
     .left-panel { display: none; }
     body { background: white; }
-    .right-panel { padding: 32px 20px; align-items: flex-start; padding-top: 60px; }
+    .right-panel { padding: 32px 20px; align-items: flex-start; padding-top: 60px; padding-bottom: 60px; }
   }
 </style>
 </head>
@@ -164,12 +171,12 @@
   <div class="brand">
     <span class="brand-icon">🏠</span>
     <div class="brand-name">Registro Original de Custos</div>
-    <div class="brand-tagline">Gerencie seus custos de arrematacao com organizacao e controle total.</div>
+    <div class="brand-tagline">Gerencie seus custos de arrematação com organização e controle total.</div>
   </div>
   <div class="features">
     <div class="feature-item">
       <div class="feature-icon">📊</div>
-      <span>Dashboard com visao geral dos imoveis</span>
+      <span>Dashboard com visão geral dos imóveis</span>
     </div>
     <div class="feature-item">
       <div class="feature-icon">📎</div>
@@ -177,7 +184,7 @@
     </div>
     <div class="feature-item">
       <div class="feature-icon">📥</div>
-      <span>Exporte relatorios em Excel</span>
+      <span>Exporte relatórios em Excel</span>
     </div>
     <div class="feature-item">
       <div class="feature-icon">🔒</div>
@@ -276,7 +283,7 @@ function switchTab(tab) {
     document.getElementById('formRegister').style.display = '';
     document.getElementById('tabRegister').classList.add('active');
     document.getElementById('formTitle').textContent = 'Criar conta';
-    document.getElementById('formSubtitle').textContent = 'Rapido e gratuito';
+    document.getElementById('formSubtitle').textContent = 'Rápido e gratuito';
   } else if (tab === 'forgot') {
     document.getElementById('formForgot').style.display = '';
     document.getElementById('formTitle').textContent = 'Redefinir senha';
@@ -302,10 +309,10 @@ async function doForgot() {
       document.getElementById('errorMsg').style.background = '#f0fdf4';
       document.getElementById('errorMsg').style.borderColor = '#bbf7d0';
       document.getElementById('errorMsg').style.color = '#16a34a';
-      document.getElementById('errorMsg').textContent = 'Se o e-mail existir, voce recebera o link em instantes.';
+      document.getElementById('errorMsg').textContent = 'Se o e-mail existir, você receberá o link em instantes.';
       document.getElementById('errorMsg').classList.add('show');
     } else { showError(data.error || 'Erro ao enviar.'); }
-  } catch(e) { showError('Erro de conexao.'); }
+  } catch(e) { showError('Erro de conexão.'); }
   finally { btn.disabled = false; btn.querySelector('span').textContent = 'Enviar Link'; }
 }
 
@@ -338,7 +345,7 @@ async function doLogin() {
     const data = await res.json();
     if (res.ok) { window.location.href = '/'; }
     else { showError(data.error || 'Erro ao entrar.'); }
-  } catch(e) { showError('Erro de conexao. Tente novamente.'); }
+  } catch(e) { showError('Erro de conexão. Tente novamente.'); }
   finally { btn.disabled = false; btn.querySelector('span').textContent = 'Entrar'; }
 }
 
@@ -360,7 +367,7 @@ async function doRegister() {
     const data = await res.json();
     if (res.ok) { window.location.href = '/'; }
     else { showError(data.error || 'Erro ao criar conta.'); }
-  } catch(e) { showError('Erro de conexao. Tente novamente.'); }
+  } catch(e) { showError('Erro de conexão. Tente novamente.'); }
   finally { btn.disabled = false; btn.querySelector('span').textContent = 'Criar Conta'; }
 }
 
@@ -370,5 +377,11 @@ document.addEventListener('keydown', e => {
   if (loginVisible) doLogin(); else doRegister();
 });
 </script>
+<div class="login-footer">
+  &copy; 2026 Registro Original de Custos &nbsp;|&nbsp;
+  <a href="/terms" target="_blank">Termos de Uso</a>
+  <a href="/privacy" target="_blank">Política de Privacidade</a>
+  <a href="mailto:vribeirob11@gmail.com">Entre em Contato</a>
+</div>
 </body>
 </html>
