@@ -494,10 +494,66 @@
   .date-range input { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; }
   .date-range span { color: var(--text-muted); font-size: 12px; }
 
+  /* ─── BOTTOM NAV (mobile) ─── */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--primary);
+    height: 60px; z-index: 100;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .bottom-nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: rgba(255,255,255,.6); font-size: 10px; gap: 3px;
+    cursor: pointer; transition: color .15s; padding: 6px 0;
+  }
+  .bottom-nav-item.active { color: #93c5fd; }
+  .bottom-nav-item:active { background: rgba(255,255,255,.08); }
+  .bottom-nav-item .bnav-icon { font-size: 20px; line-height: 1; }
+
+  /* ─── MOBILE ─── */
   @media (max-width: 768px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .stat-row { grid-template-columns: 1fr 1fr; }
     .sidebar { display: none; }
+    .bottom-nav { display: flex; }
+    .main { padding: 14px 12px 72px; }
+
+    /* Header wraps on mobile */
+    header { height: auto; flex-wrap: wrap; padding: 10px 12px; gap: 8px; min-height: 52px; }
+    header .logo { font-size: 13px; }
+    header .prop-select-wrap { order: 3; flex: 0 0 100%; margin-left: 0; max-width: 100%; padding-bottom: 4px; }
+    header .header-actions { margin-left: auto; gap: 6px; }
+    .user-name { display: none; }
+    .btn-header-hide { display: none !important; }
+
+    /* Stats */
+    .stat-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-card { padding: 14px 16px; }
+    .stat-card .stat-value { font-size: 18px; }
+
+    /* Forms */
+    .form-grid { grid-template-columns: 1fr; }
+
+    /* Cards */
+    .props-grid { grid-template-columns: 1fr; }
+
+    /* Tables: allow horizontal scroll */
+    .table-wrap { border-radius: 8px; font-size: 12px; }
+    thead th { padding: 9px 10px; font-size: 11px; }
+    tbody td { padding: 8px 10px; }
+
+    /* Modals full screen */
+    .modal-backdrop { padding: 0; align-items: flex-end; }
+    .modal { border-radius: 16px 16px 0 0; max-height: 92vh; width: 100%; max-width: 100%; }
+
+    /* Dashboard toolbar */
+    .dash-toolbar { flex-direction: row; }
+
+    /* Nicho grid */
+    .nicho-grid { grid-template-columns: 1fr; }
+
+    /* Doc cards */
+    .docs-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -513,9 +569,9 @@
     </select>
   </div>
   <div class="header-actions">
-    <button class="btn btn-outline btn-sm" onclick="openNovoImovelModal()">+ Novo Imovel</button>
-    <button class="btn btn-accent btn-sm" onclick="exportarExcelAll()">&#8659; Excel</button>
-    <div class="user-badge">
+    <button class="btn btn-outline btn-sm btn-header-hide" onclick="openNovoImovelModal()">+ Novo Imovel</button>
+    <button class="btn btn-accent btn-sm btn-header-hide" onclick="exportarExcelAll()">&#8659; Excel</button>
+    <div class="user-badge" onclick="openPerfil()" title="Meu Perfil">
       <div class="user-avatar" id="userAvatar">?</div>
       <span class="user-name" id="userName">{{ usuario_nome }}</span>
     </div>
@@ -552,6 +608,12 @@
 
     <!-- ─── DASHBOARD ─── -->
     <div class="tab-panel active" id="tab-dashboard">
+
+      <!-- Botoes visiveis so no mobile -->
+      <div id="mobileActions" style="display:none;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="openNovoImovelModal()">+ Novo Imovel</button>
+        <button class="btn btn-accent btn-sm" onclick="exportarExcelAll()">&#8659; Excel</button>
+      </div>
 
       <div class="stat-row" id="statRow">
         <div class="stat-card">
@@ -889,6 +951,61 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalEditCusto')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarEdicao()">Salvar Alteracoes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── BOTTOM NAV (mobile) ─── -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-item active" data-tab="dashboard">
+    <span class="bnav-icon">📊</span><span>Dashboard</span>
+  </div>
+  <div class="bottom-nav-item" data-tab="lancamento">
+    <span class="bnav-icon">➕</span><span>Lancar</span>
+  </div>
+  <div class="bottom-nav-item" data-tab="custos">
+    <span class="bnav-icon">📋</span><span>Custos</span>
+  </div>
+  <div class="bottom-nav-item" data-tab="historico">
+    <span class="bnav-icon">📅</span><span>Historico</span>
+  </div>
+  <div class="bottom-nav-item" data-tab="documentos">
+    <span class="bnav-icon">📁</span><span>Docs</span>
+  </div>
+</nav>
+
+<!-- ─── MODAL: PERFIL ─── -->
+<div class="modal-backdrop hidden" id="modalPerfil" onclick="backdropClose(event,'modalPerfil')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Meu Perfil</div>
+      <button class="modal-close" onclick="closeModal('modalPerfil')">&#x2715;</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid var(--border)">
+      <div class="user-avatar" style="width:46px;height:46px;font-size:18px;flex-shrink:0" id="perfilAvatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;color:var(--text)" id="perfilNome">—</div>
+        <div style="font-size:13px;color:var(--text-muted)" id="perfilEmail">—</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">Alterar Senha</div>
+    <div id="perfilError" style="background:#fef2f2;border:1px solid #fecaca;color:var(--danger);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
+    <div id="perfilSuccess" style="background:#f0fdf4;border:1px solid #bbf7d0;color:var(--success);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
+    <div class="form-group">
+      <label>Senha Atual</label>
+      <input type="password" id="perfil_senha_atual" placeholder="••••••••" />
+    </div>
+    <div class="form-group">
+      <label>Nova Senha</label>
+      <input type="password" id="perfil_senha_nova" placeholder="Min. 6 caracteres" />
+    </div>
+    <div class="form-group">
+      <label>Confirmar Nova Senha</label>
+      <input type="password" id="perfil_senha_confirmar" placeholder="Repita a nova senha" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalPerfil')">Fechar</button>
+      <button class="btn btn-primary" onclick="alterarSenha()">Salvar Senha</button>
     </div>
   </div>
 </div>
@@ -1450,6 +1567,81 @@ function formatDate(isoDate) {
   const [y, m, d] = isoDate.split('-');
   const months = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   return `${parseInt(d)} de ${months[parseInt(m)-1]} de ${y}`;
+}
+
+// ═══ BOTTOM NAV ══════════════════════════════════════════════════════════════
+document.querySelectorAll('.bottom-nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+    if (tab === 'custos') renderCustos();
+    if (tab === 'historico') renderHistorico();
+    if (tab === 'documentos') renderDocumentos();
+  });
+});
+
+// Sync sidebar nav with bottom nav
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+  });
+});
+
+// Show mobile action buttons on mobile
+if (window.innerWidth <= 768) {
+  document.getElementById('mobileActions').style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  document.getElementById('mobileActions').style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
+
+// ═══ PERFIL ══════════════════════════════════════════════════════════════════
+function openPerfil() {
+  const nome = document.getElementById('userName').textContent.trim();
+  document.getElementById('perfilNome').textContent = nome;
+  document.getElementById('perfilAvatar').textContent = nome ? nome[0].toUpperCase() : '?';
+  document.getElementById('perfilEmail').textContent = 'Carregando...';
+  document.getElementById('perfilError').style.display = 'none';
+  document.getElementById('perfilSuccess').style.display = 'none';
+  document.getElementById('perfil_senha_atual').value = '';
+  document.getElementById('perfil_senha_nova').value = '';
+  document.getElementById('perfil_senha_confirmar').value = '';
+  apiFetch('/api/auth/me').then(me => {
+    document.getElementById('perfilEmail').textContent = me.email;
+  }).catch(() => {});
+  openModal('modalPerfil');
+}
+
+async function alterarSenha() {
+  const atual = document.getElementById('perfil_senha_atual').value;
+  const nova = document.getElementById('perfil_senha_nova').value;
+  const conf = document.getElementById('perfil_senha_confirmar').value;
+  const errEl = document.getElementById('perfilError');
+  const sucEl = document.getElementById('perfilSuccess');
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+  if (!atual || !nova || !conf) { errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return; }
+  if (nova !== conf) { errEl.textContent = 'As senhas nao conferem.'; errEl.style.display = 'block'; return; }
+  if (nova.length < 6) { errEl.textContent = 'Nova senha deve ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+  try {
+    await apiFetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha_atual: atual, senha_nova: nova })
+    });
+    sucEl.textContent = 'Senha alterada com sucesso!';
+    sucEl.style.display = 'block';
+    document.getElementById('perfil_senha_atual').value = '';
+    document.getElementById('perfil_senha_nova').value = '';
+    document.getElementById('perfil_senha_confirmar').value = '';
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
 }
 
 // ═══ INIT ════════════════════════════════════════════════════════════════════

@@ -205,7 +205,10 @@
         <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email" />
       </div>
       <div class="form-group">
-        <label>Senha</label>
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          Senha
+          <span style="font-weight:400;font-size:12px;color:var(--accent);cursor:pointer" onclick="switchTab('forgot')">Esqueci minha senha</span>
+        </label>
         <div class="input-wrap">
           <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" />
           <button type="button" class="toggle-pw" onclick="togglePw('loginSenha', this)" title="Mostrar senha">👁</button>
@@ -214,6 +217,21 @@
       <button class="btn-submit" id="btnLogin" onclick="doLogin()">
         <span>Entrar</span>
       </button>
+    </div>
+
+    <!-- ESQUECI MINHA SENHA -->
+    <div id="formForgot" style="display:none">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="forgotEmail" placeholder="seu@email.com" autocomplete="email" />
+      </div>
+      <button class="btn-submit" id="btnForgot" onclick="doForgot()">
+        <span>Enviar Link</span>
+      </button>
+      <p style="text-align:center;margin-top:14px;font-size:13px;color:var(--text-muted)">
+        <span style="color:var(--accent);cursor:pointer" onclick="switchTab('login')">Voltar ao login</span>
+      </p>
     </div>
 
     <!-- CADASTRO -->
@@ -243,14 +261,52 @@
 
 <script>
 function switchTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('tabLogin').classList.toggle('active', isLogin);
-  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
-  document.getElementById('formLogin').style.display = isLogin ? '' : 'none';
-  document.getElementById('formRegister').style.display = isLogin ? 'none' : '';
   document.getElementById('errorMsg').classList.remove('show');
-  document.getElementById('formTitle').textContent = isLogin ? 'Bem-vindo de volta' : 'Criar conta';
-  document.getElementById('formSubtitle').textContent = isLogin ? 'Acesse sua conta para continuar' : 'Rapido e gratuito';
+  document.getElementById('formLogin').style.display = 'none';
+  document.getElementById('formRegister').style.display = 'none';
+  document.getElementById('formForgot').style.display = 'none';
+  document.getElementById('tabLogin').classList.remove('active');
+  document.getElementById('tabRegister').classList.remove('active');
+  if (tab === 'login') {
+    document.getElementById('formLogin').style.display = '';
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('formTitle').textContent = 'Bem-vindo de volta';
+    document.getElementById('formSubtitle').textContent = 'Acesse sua conta para continuar';
+  } else if (tab === 'register') {
+    document.getElementById('formRegister').style.display = '';
+    document.getElementById('tabRegister').classList.add('active');
+    document.getElementById('formTitle').textContent = 'Criar conta';
+    document.getElementById('formSubtitle').textContent = 'Rapido e gratuito';
+  } else if (tab === 'forgot') {
+    document.getElementById('formForgot').style.display = '';
+    document.getElementById('formTitle').textContent = 'Redefinir senha';
+    document.getElementById('formSubtitle').textContent = 'Enviaremos um link para seu e-mail';
+  }
+}
+
+async function doForgot() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const btn = document.getElementById('btnForgot');
+  document.getElementById('errorMsg').classList.remove('show');
+  if (!email) { showError('Informe seu e-mail.'); return; }
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Enviando...';
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById('errorMsg').style.background = '#f0fdf4';
+      document.getElementById('errorMsg').style.borderColor = '#bbf7d0';
+      document.getElementById('errorMsg').style.color = '#16a34a';
+      document.getElementById('errorMsg').textContent = 'Se o e-mail existir, voce recebera o link em instantes.';
+      document.getElementById('errorMsg').classList.add('show');
+    } else { showError(data.error || 'Erro ao enviar.'); }
+  } catch(e) { showError('Erro de conexao.'); }
+  finally { btn.disabled = false; btn.querySelector('span').textContent = 'Enviar Link'; }
 }
 
 function showError(msg) {

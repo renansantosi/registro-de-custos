@@ -84,6 +84,14 @@ def init_db(db_path=None):
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS reset_tokens (
+            token TEXT PRIMARY KEY,
+            usuario_id TEXT NOT NULL,
+            expira_em TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
 
     try:
@@ -264,3 +272,51 @@ def get_custo(db_path, custo_id):
     row = to_dict(c.fetchone())
     conn.close()
     return row
+
+
+# ─── SENHA / RESET ───────────────────────────────────────────────────────────
+
+def change_password(db_path, user_id, new_hash):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"UPDATE usuarios SET senha_hash = {PH} WHERE id = {PH}", (new_hash, user_id))
+    conn.commit()
+    conn.close()
+
+
+def create_reset_token(db_path, user_id):
+    import secrets
+    from datetime import timedelta
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"DELETE FROM reset_tokens WHERE usuario_id = {PH}", (user_id,))
+    token = secrets.token_urlsafe(32)
+    expira_em = (datetime.now() + timedelta(hours=1)).isoformat()
+    c.execute(
+        f"INSERT INTO reset_tokens (token, usuario_id, expira_em) VALUES ({PH},{PH},{PH})",
+        (token, user_id, expira_em)
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def get_valid_reset_token(db_path, token):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM reset_tokens WHERE token = {PH}", (token,))
+    row = to_dict(c.fetchone())
+    conn.close()
+    if not row:
+        return None
+    if datetime.now().isoformat() > row['expira_em']:
+        return None
+    return row
+
+
+def delete_reset_token(db_path, token):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"DELETE FROM reset_tokens WHERE token = {PH}", (token,))
+    conn.commit()
+    conn.close()

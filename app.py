@@ -3,11 +3,13 @@ import uuid
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory, send_file, redirect, url_for, render_template
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import (
     init_db, get_imoveis, add_imovel, get_custos, get_all_custos,
     add_custo, update_custo, delete_custo, get_custo,
-    add_usuario, get_usuario_by_email, get_usuario_by_id
+    add_usuario, get_usuario_by_email, get_usuario_by_id,
+    change_password, create_reset_token, get_valid_reset_token, delete_reset_token
 )
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -24,6 +26,14 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login_page'
+
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', '')
+mail = Mail(app)
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
 
@@ -132,6 +142,74 @@ def api_logout():
 @login_required
 def api_me():
     return jsonify({'id': current_user.id, 'nome': current_user.nome, 'email': current_user.email})
+
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    data = request.get_json(force=True) or {}
+    senha_atual = data.get('senha_atual', '')
+    senha_nova = data.get('senha_nova', '')
+    if not senha_atual or not senha_nova:
+        return jsonify({'error': 'Preencha todos os campos'}), 400
+    if len(senha_nova) < 6:
+        return jsonify({'error': 'Nova senha deve ter pelo menos 6 caracteres'}), 400
+    usuario = get_usuario_by_id(DB_PATH, current_user.id)
+    if not check_password_hash(usuario['senha_hash'], senha_atual):
+        return jsonify({'error': 'Senha atual incorreta'}), 401
+    change_password(DB_PATH, current_user.id, generate_password_hash(senha_nova))
+    return jsonify({'ok': True})
+
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def api_forgot_password():
+    data = request.get_json(force=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'Informe o e-mail'}), 400
+    usuario = get_usuario_by_email(DB_PATH, email)
+    if not usuario:
+        return jsonify({'ok': True})  # nao revela se email existe
+    if not app.config.get('MAIL_USERNAME'):
+        return jsonify({'error': 'Envio de email nao configurado. Contate o administrador.'}), 503
+    token = create_reset_token(DB_PATH, usuario['id'])
+    base_url = request.host_url.rstrip('/')
+    reset_url = f"{base_url}/reset-password/{token}"
+    try:
+        msg = Message(
+            subject='Redefinicao de senha — Registro Original de Custos',
+            recipients=[email],
+            body=f"Ola {usuario['nome']},\n\nClique no link abaixo para redefinir sua senha (valido por 1 hora):\n\n{reset_url}\n\nSe nao solicitou isso, ignore este email."
+        )
+        mail.send(msg)
+    except Exception as e:
+        return jsonify({'error': f'Erro ao enviar email: {str(e)}'}), 500
+    return jsonify({'ok': True})
+
+
+@app.route('/reset-password/<token>')
+def reset_password_page(token):
+    row = get_valid_reset_token(DB_PATH, token)
+    if not row:
+        return render_template('reset_password.html', token=token, invalido=True)
+    return render_template('reset_password.html', token=token, invalido=False)
+
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def api_reset_password():
+    data = request.get_json(force=True) or {}
+    token = data.get('token', '')
+    senha_nova = data.get('senha_nova', '')
+    if not token or not senha_nova:
+        return jsonify({'error': 'Dados invalidos'}), 400
+    if len(senha_nova) < 6:
+        return jsonify({'error': 'Senha deve ter pelo menos 6 caracteres'}), 400
+    row = get_valid_reset_token(DB_PATH, token)
+    if not row:
+        return jsonify({'error': 'Link invalido ou expirado'}), 400
+    change_password(DB_PATH, row['usuario_id'], generate_password_hash(senha_nova))
+    delete_reset_token(DB_PATH, token)
+    return jsonify({'ok': True})
 
 
 # ─── Frontend ────────────────────────────────────────────────────────────────
