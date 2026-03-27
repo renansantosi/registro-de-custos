@@ -873,6 +873,39 @@ def api_viabilidade():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/viabilidade/chat', methods=['POST'])
+@login_required
+def api_viabilidade_chat():
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'API não configurada'}), 503
+    data = request.get_json(force=True) or {}
+    historico = data.get('historico', [])
+    analise_original = data.get('analise_original', '')
+    if not historico:
+        return jsonify({'error': 'Mensagem obrigatória'}), 400
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        system_msg = f"""Você é o assistente de análise de leilões imobiliários do LeilaoPro.
+O usuário já recebeu uma análise completa de viabilidade financeira.
+Quando o usuário informar novos dados (área corrigida, valor de mercado, situação de ocupação, etc.),
+recalcule os valores afetados e apresente os resultados atualizados de forma clara e objetiva.
+Mantenha o mesmo rigor técnico da análise original.
+
+ANÁLISE ORIGINAL:
+{analise_original[:3000]}"""
+        message = client.messages.create(
+            model='claude-opus-4-6',
+            max_tokens=4000,
+            system=system_msg,
+            messages=historico
+        )
+        return jsonify({'ok': True, 'resposta': message.content[0].text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/terms')
 def terms_page():
     return render_template('terms.html')

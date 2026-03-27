@@ -1993,6 +1993,58 @@ async function alterarSenha() {
   }
 }
 
+// ─── Chat viabilidade ───
+let _viabHistorico = [];
+let _viabAnaliseOriginal = '';
+
+async function enviarChatViab() {
+  const input = document.getElementById('viabChatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const msgs = document.getElementById('viabChatMsgs');
+  const btn = document.getElementById('btnChatViab');
+
+  _viabHistorico.push({ role: 'user', content: msg });
+  _appendChatMsg(msgs, 'user', msg);
+  input.value = '';
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const loadingId = 'chat-loading-' + Date.now();
+  msgs.innerHTML += `<div id="${loadingId}" style="align-self:flex-start;background:#f1f5f9;border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text-muted)">⏳ Recalculando...</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const res = await fetch('/api/viabilidade/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ historico: _viabHistorico, analise_original: _viabAnaliseOriginal })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro');
+    document.getElementById(loadingId)?.remove();
+    _viabHistorico.push({ role: 'assistant', content: data.resposta });
+    _appendChatMsg(msgs, 'assistant', data.resposta);
+  } catch(e) {
+    document.getElementById(loadingId)?.remove();
+    _appendChatMsg(msgs, 'error', e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enviar';
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function _appendChatMsg(container, role, texto) {
+  const isUser = role === 'user';
+  const isError = role === 'error';
+  const div = document.createElement('div');
+  div.style.cssText = `align-self:${isUser?'flex-end':'flex-start'};max-width:90%;background:${isUser?'linear-gradient(135deg,#4f46e5,#7c3aed)':isError?'#fef2f2':'#f8fafc'};color:${isUser?'#fff':isError?'var(--danger)':'var(--text)'};border-radius:${isUser?'12px 12px 4px 12px':'12px 12px 12px 4px'};padding:10px 14px;font-size:13px;line-height:1.5;border:1px solid ${isUser?'transparent':isError?'#fecaca':'var(--border)'}`;
+  div.innerHTML = isUser ? escHtml(texto) : _mdToHtml(texto);
+  container.appendChild(div);
+}
+
 // ═══ PARCEIROS ═══════════════════════════════════════════════════════════════
 let _parceirosImovelId = null;
 
@@ -2100,6 +2152,8 @@ async function analisarViabilidade() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro na análise');
 
+    _viabAnaliseOriginal = data.analise;
+    _viabHistorico = [];
     resultado.innerHTML = _renderViabilidade(data.analise);
   } catch(e) {
     errEl.textContent = e.message;
@@ -2114,33 +2168,43 @@ async function analisarViabilidade() {
   }
 }
 
-function _renderViabilidade(texto) {
-  // Extrai bloco de dados estruturados
-  const blocoMatch = texto.match(/CIDADE:([\s\S]*?)(?:$)/i);
-  const linhas = texto.split('\n');
-
-  // Converte markdown simples para HTML
-  let html = texto
+function _mdToHtml(texto) {
+  return texto
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^(#{1,3})\s(.+)$/gm, (_, h, t) => `<div style="font-size:${h.length===1?'18':h.length===2?'15':'13'}px;font-weight:800;color:var(--text);margin:20px 0 8px;letter-spacing:-.2px">${t}</div>`)
-    .replace(/^([1-9]️⃣.+)$/gm, '<div style="font-size:16px;font-weight:800;color:var(--accent);margin:24px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--accent-light)">$1</div>')
-    .replace(/^(✔|✅|⚠️|❌|📊|📈|🎯|💰|🏠|🔎|📋|📜|💵|🧠|⭐).+$/gm, '<div style="margin:4px 0;padding:6px 10px;background:#f8fafc;border-radius:6px;border-left:3px solid var(--accent)">$&</div>')
-    .replace(/^(CIDADE|BAIRRO|TIPO_IMOVEL|METRAGEM|VALOR|CUSTO|LUCRO|ROI|SCORE|SITUACAO|RISCO|LIQUIDEZ)(.+)$/gm,
-      '<div style="display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-muted);font-weight:600">$1$2</span></div>')
-    .replace(/\n\n/g, '<br><br>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^#{3}\s(.+)$/gm, '<div style="font-size:13px;font-weight:800;color:var(--text);margin:10px 0 4px">$1</div>')
+    .replace(/^#{2}\s(.+)$/gm, '<div style="font-size:14px;font-weight:800;color:var(--text);margin:12px 0 4px">$1</div>')
+    .replace(/^#{1}\s(.+)$/gm, '<div style="font-size:15px;font-weight:800;color:var(--text);margin:14px 0 6px">$1</div>')
+    .replace(/^([1-9]️⃣\s?.+)$/gm, '<div style="font-size:14px;font-weight:800;color:var(--accent);margin:14px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--accent-light)">$1</div>')
+    .replace(/^[-•]\s(.+)$/gm, '<div style="padding:2px 0 2px 14px;border-left:2px solid var(--border);margin:2px 0;font-size:13px">$1</div>')
+    .replace(/\n{2,}/g, '<br>')
     .replace(/\n/g, '<br>');
+}
 
+function _renderViabilidade(texto) {
+  const html = _mdToHtml(texto);
   return `
-    <div class="card" style="line-height:1.7;font-size:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border)">
+    <div class="card" style="line-height:1.6;font-size:13px;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--border)">
         <div>
-          <div style="font-size:18px;font-weight:800;color:var(--text)">📊 Análise de Viabilidade</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Gerado por IA — ${new Date().toLocaleString('pt-BR')}</div>
+          <div style="font-size:16px;font-weight:800;color:var(--text)">📊 Análise de Viabilidade</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Gerado por IA — ${new Date().toLocaleString('pt-BR')}</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir</button>
       </div>
       <div style="color:var(--text)">${html}</div>
+    </div>
+    <div class="card" style="margin-top:16px;padding:16px" id="viabChatBox">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">💬 Ajustar análise</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Informe novos dados (área corrigida, valor de mercado, ocupação, etc.) e a IA recalcula.</div>
+      <div id="viabChatMsgs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:320px;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="viabChatInput" placeholder="Ex: A área real é 70m², recalcule o ROI e o lance máximo..."
+          style="flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;outline:none"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarChatViab()}" />
+        <button class="btn btn-primary btn-sm" onclick="enviarChatViab()" id="btnChatViab">Enviar</button>
+      </div>
     </div>`;
 }
 
