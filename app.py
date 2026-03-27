@@ -781,6 +781,96 @@ def send_imovel_notification(imovel_id, event_type, new_custo=None):
     threading.Thread(target=_send, daemon=True).start()
 
 
+# ─── VIABILIDADE FINANCEIRA ───────────────────────────────────────────────────
+
+VIABILIDADE_PROMPT = """Você é um especialista em leilões imobiliários no Brasil, com experiência em leilões extrajudiciais de bancos, leilões judiciais, análise de matrícula imobiliária, análise de edital de leilão e investimento imobiliário para revenda (flip).
+
+O objetivo da análise é identificar se o imóvel representa uma boa oportunidade de investimento para revenda rápida, buscando ROI mínimo de 30%.
+
+Analise o edital e a matrícula como um investidor profissional, procurando riscos jurídicos ocultos, custos reais da operação e potencial real de lucro.
+
+REGRAS DE CUSTOS (OBRIGATÓRIO):
+- R$ 30.000 para obra (sempre incluir)
+- R$ 15.000 para desocupação/imissão na posse (incluir se ocupado ou situação não clara; desconsiderar se edital confirmar imóvel desocupado)
+- Estimar: ITBI, registro em cartório, taxas cartorárias, certidões, comissão do leiloeiro
+
+ANÁLISE OBRIGATÓRIA DA MATRÍCULA — leia linha por linha e identifique: alienação fiduciária, consolidação da propriedade, hipoteca, penhoras, usufruto, indisponibilidade, execuções fiscais, averbações, ações judiciais, risco de ocupação, disputa judicial, nulidade do leilão.
+
+RESPONSABILIDADE POR DÍVIDAS — identifique quem paga: IPTU, condomínio, débitos fiscais, taxas municipais, dívidas anteriores.
+
+ANÁLISE DE MERCADO (REGRA ABSOLUTA) — NÃO utilize o valor de avaliação do banco/leiloeiro. Use exclusivamente pesquisa de imóveis comparáveis (OLX, Viva Real, ZAP Imóveis, Imovelweb) considerando mesma região, metragem, tipo, padrão, quartos e vagas. Se não encontrar comparáveis suficientes, pergunte ao usuário o valor projetado de venda.
+
+Apresente a resposta exatamente nesta estrutura:
+
+1️⃣ DADOS DO IMÓVEL
+2️⃣ ANÁLISE DE RISCO
+3️⃣ CUSTOS TOTAIS ESTIMADOS
+4️⃣ SIMULAÇÃO DE REVENDA COM ROI (cenários conservador, provável e otimista)
+5️⃣ ANÁLISE ESTRATÉGICA (liquidez, perfil comprador, tempo de venda)
+6️⃣ SCORE DE OPORTUNIDADE (0-100): 80-100 Excelente | 60-79 Boa | 40-59 Moderada | 0-39 Alto risco
+7️⃣ LANCE MÁXIMO RECOMENDADO (para ROI mínimo de 30%)
+8️⃣ VALIDAÇÃO DE INFORMAÇÕES CRÍTICAS
+9️⃣ CONCLUSÃO FINAL
+
+Ao final, apresente um bloco estruturado:
+CIDADE:
+BAIRRO:
+TIPO_IMOVEL:
+METRAGEM_APROXIMADA:
+VALOR_ARREMATACAO_ESTIMADO:
+CUSTO_TOTAL_OPERACAO:
+VALOR_MERCADO_ESTIMADO:
+VALOR_VENDA_CONSERVADOR:
+VALOR_VENDA_PROVAVEL:
+VALOR_VENDA_OTIMISTA:
+LUCRO_LIQUIDO_ESTIMADO:
+ROI_PROJETADO:
+SCORE_OPORTUNIDADE:
+SITUACAO_OCUPACAO:
+RISCO_JURIDICO_PRINCIPAL:
+LIQUIDEZ_REGIAO:
+
+Quando uma informação não puder ser confirmada pelos documentos, escreva explicitamente: "Esta informação não pôde ser confirmada apenas com os documentos fornecidos." Nunca interrompa a análise por isso — continue com as informações disponíveis."""
+
+
+@app.route('/api/viabilidade/analisar', methods=['POST'])
+@login_required
+def api_viabilidade():
+    import base64
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'API de análise não configurada. Adicione ANTHROPIC_API_KEY nas variáveis de ambiente.'}), 503
+
+    edital = request.files.get('edital')
+    matricula = request.files.get('matricula')
+    if not edital:
+        return jsonify({'error': 'Edital do leilão é obrigatório (PDF)'}), 400
+    if not matricula:
+        return jsonify({'error': 'Matrícula do imóvel é obrigatória (PDF)'}), 400
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        edital_b64 = base64.standard_b64encode(edital.read()).decode('utf-8')
+        matricula_b64 = base64.standard_b64encode(matricula.read()).decode('utf-8')
+
+        message = client.messages.create(
+            model='claude-opus-4-6',
+            max_tokens=8000,
+            messages=[{
+                'role': 'user',
+                'content': [
+                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': edital_b64}, 'title': 'Edital do Leilão'},
+                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': matricula_b64}, 'title': 'Matrícula do Imóvel'},
+                    {'type': 'text', 'text': VIABILIDADE_PROMPT}
+                ]
+            }]
+        )
+        return jsonify({'ok': True, 'analise': message.content[0].text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/terms')
 def terms_page():
     return render_template('terms.html')

@@ -24,6 +24,7 @@
     --sidebar-w: 220px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   body {
     font-family: 'Inter', system-ui, sans-serif;
     background: var(--bg);
@@ -682,7 +683,11 @@
     <div class="nav-item" data-tab="documentos">
       <span class="icon">📁</span> Documentos
     </div>
-    <div class="sidebar-footer">Registro Original de Custos</div>
+    <div class="sidebar-section-label" style="margin-top:12px">Análise</div>
+    <div class="nav-item" data-tab="viabilidade">
+      <span class="icon">🎯</span> Viabilidade
+    </div>
+    <div class="sidebar-footer">LeilaoPro</div>
   </nav>
 
   <!-- MAIN -->
@@ -912,6 +917,63 @@
         <input type="text" id="docTextoFilter" placeholder="Buscar..." oninput="renderDocumentos()" data-nocap />
       </div>
       <div id="docsContainer"></div>
+    </div>
+
+    <!-- ─── VIABILIDADE FINANCEIRA ─── -->
+    <div class="tab-panel" id="tab-viabilidade">
+      <div class="page-title">🎯 Viabilidade Financeira <small>Análise de Leilão com IA</small></div>
+
+      <div style="display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start">
+
+        <!-- Upload form -->
+        <div class="card" style="position:sticky;top:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">📄 Documentos para análise</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Faça upload do edital e da matrícula em PDF. A IA irá analisar riscos, custos e ROI.</div>
+
+          <div class="form-group" style="margin-bottom:14px">
+            <label>Edital do Leilão (PDF) <span class="required-mark">*</span></label>
+            <div class="dropzone" id="dzEdital" onclick="document.getElementById('editalInput').click()">
+              <input type="file" id="editalInput" accept="application/pdf" style="display:none" onchange="setFile('edital',this)">
+              <div class="dz-icon">📋</div>
+              <div class="dz-text" id="editalLabel">Clique para selecionar o <strong>edital</strong></div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>Matrícula do Imóvel (PDF) <span class="required-mark">*</span></label>
+            <div class="dropzone" id="dzMatricula" onclick="document.getElementById('matriculaInput').click()">
+              <input type="file" id="matriculaInput" accept="application/pdf" style="display:none" onchange="setFile('matricula',this)">
+              <div class="dz-icon">📜</div>
+              <div class="dz-text" id="matriculaLabel">Clique para selecionar a <strong>matrícula</strong></div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="analisarViabilidade()" id="btnAnalisar">
+            🔍 Analisar Viabilidade
+          </button>
+          <div id="viabError" style="margin-top:12px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:8px;font-size:13px;display:none"></div>
+
+          <div style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid var(--border);font-size:11px;color:var(--text-muted);line-height:1.6">
+            <strong style="color:var(--text)">A análise inclui:</strong><br>
+            ✔ Riscos jurídicos da matrícula<br>
+            ✔ Custos reais da operação<br>
+            ✔ Valor de mercado estimado<br>
+            ✔ Simulação de ROI (3 cenários)<br>
+            ✔ Score de oportunidade 0–100<br>
+            ✔ Lance máximo recomendado
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="viabResultado">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted);text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">🎯</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Análise de Viabilidade</div>
+            <div style="font-size:13px;max-width:320px">Faça upload do edital e da matrícula ao lado e clique em "Analisar" para receber uma análise completa com IA.</div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <footer class="app-footer">
@@ -1994,6 +2056,92 @@ async function toggleParceiro(id, notificar) {
     await apiFetch(`/api/parceiros/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notificar }) });
   } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══ VIABILIDADE ═════════════════════════════════════════════════════════════
+const _viabFiles = {};
+
+function setFile(tipo, input) {
+  const file = input.files[0];
+  if (!file) return;
+  _viabFiles[tipo] = file;
+  const label = document.getElementById(tipo === 'edital' ? 'editalLabel' : 'matriculaLabel');
+  const dz = document.getElementById(tipo === 'edital' ? 'dzEdital' : 'dzMatricula');
+  label.innerHTML = `✅ <strong>${escHtml(file.name)}</strong>`;
+  dz.style.borderColor = 'var(--success)';
+  dz.style.background = '#f0fdf4';
+}
+
+async function analisarViabilidade() {
+  const errEl = document.getElementById('viabError');
+  errEl.style.display = 'none';
+
+  if (!_viabFiles.edital) { errEl.textContent = 'Selecione o edital do leilão (PDF).'; errEl.style.display = 'block'; return; }
+  if (!_viabFiles.matricula) { errEl.textContent = 'Selecione a matrícula do imóvel (PDF).'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btnAnalisar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analisando… pode levar 1-2 min';
+
+  const resultado = document.getElementById('viabResultado');
+  resultado.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;color:var(--text-muted);text-align:center">
+      <div style="width:48px;height:48px;border:4px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px"></div>
+      <div style="font-size:15px;font-weight:700;color:var(--text)">Analisando documentos com IA...</div>
+      <div style="font-size:13px;margin-top:8px;max-width:320px">Lendo edital e matrícula, pesquisando mercado e calculando ROI. Aguarde cerca de 1-2 minutos.</div>
+    </div>`;
+
+  try {
+    const fd = new FormData();
+    fd.append('edital', _viabFiles.edital);
+    fd.append('matricula', _viabFiles.matricula);
+
+    const res = await fetch('/api/viabilidade/analisar', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro na análise');
+
+    resultado.innerHTML = _renderViabilidade(data.analise);
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+    resultado.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted)">
+      <div style="font-size:36px">⚠️</div>
+      <div style="margin-top:12px;font-size:14px">${escHtml(e.message)}</div>
+    </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Analisar Viabilidade';
+  }
+}
+
+function _renderViabilidade(texto) {
+  // Extrai bloco de dados estruturados
+  const blocoMatch = texto.match(/CIDADE:([\s\S]*?)(?:$)/i);
+  const linhas = texto.split('\n');
+
+  // Converte markdown simples para HTML
+  let html = texto
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^(#{1,3})\s(.+)$/gm, (_, h, t) => `<div style="font-size:${h.length===1?'18':h.length===2?'15':'13'}px;font-weight:800;color:var(--text);margin:20px 0 8px;letter-spacing:-.2px">${t}</div>`)
+    .replace(/^([1-9]️⃣.+)$/gm, '<div style="font-size:16px;font-weight:800;color:var(--accent);margin:24px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--accent-light)">$1</div>')
+    .replace(/^(✔|✅|⚠️|❌|📊|📈|🎯|💰|🏠|🔎|📋|📜|💵|🧠|⭐).+$/gm, '<div style="margin:4px 0;padding:6px 10px;background:#f8fafc;border-radius:6px;border-left:3px solid var(--accent)">$&</div>')
+    .replace(/^(CIDADE|BAIRRO|TIPO_IMOVEL|METRAGEM|VALOR|CUSTO|LUCRO|ROI|SCORE|SITUACAO|RISCO|LIQUIDEZ)(.+)$/gm,
+      '<div style="display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-muted);font-weight:600">$1$2</span></div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  return `
+    <div class="card" style="line-height:1.7;font-size:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border)">
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">📊 Análise de Viabilidade</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Gerado por IA — ${new Date().toLocaleString('pt-BR')}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+      </div>
+      <div style="color:var(--text)">${html}</div>
+    </div>`;
 }
 
 // ═══ INIT ════════════════════════════════════════════════════════════════════

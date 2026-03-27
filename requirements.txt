@@ -3,3 +3,5 @@ Flask-Login
 Flask-Mail
 openpyxl
 psycopg2-binary
+anthropic
+werkzeug
