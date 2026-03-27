@@ -950,9 +950,39 @@
         <textarea id="im_obs" placeholder="Notas sobre o imóvel..."></textarea>
       </div>
     </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">👥 Parceiros — Notificações por E-mail</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Adicione e-mails de parceiros que receberão notificações de novos lançamentos.</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="novo_parc_nome" placeholder="Nome" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none" />
+        <input type="email" id="novo_parc_email" placeholder="E-mail" style="flex:2;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none" />
+        <button class="btn btn-primary btn-sm" onclick="adicionarParceiroTemp()">+</button>
+      </div>
+      <div id="novoImovelParceirosList" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalNovoImovel')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarImovel()">Salvar Imóvel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: PARCEIROS ─── -->
+<div class="modal-backdrop hidden" id="modalParceiros" onclick="backdropClose(event,'modalParceiros')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">👥 Parceiros — <span id="parceirosImovelNome" style="font-weight:500"></span></div>
+      <button class="modal-close" onclick="closeModal('modalParceiros')">&#x2715;</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Parceiros com "Notificar" ativado recebem e-mail ao registrar novos lançamentos ou imóveis.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="parc_nome" placeholder="Nome" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none" />
+      <input type="email" id="parc_email" placeholder="E-mail" style="flex:2;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none" />
+      <button class="btn btn-primary btn-sm" onclick="addParceiro()">+</button>
+    </div>
+    <div id="parceirosLista" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modalParceiros')">Fechar</button>
     </div>
   </div>
 </div>
@@ -1241,10 +1271,40 @@ function toast(msg, type = 'success') {
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 function backdropClose(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+let _novoImovelParceiros = [];
+
 function openNovoImovelModal() {
   ['im_nome','im_rua','im_numero','im_complemento','im_cep','im_data_arrematacao','im_obs']
     .forEach(id => { document.getElementById(id).value = ''; });
+  _novoImovelParceiros = [];
+  document.getElementById('novo_parc_nome').value = '';
+  document.getElementById('novo_parc_email').value = '';
+  _renderNovoImovelParceiros();
   openModal('modalNovoImovel');
+}
+
+function adicionarParceiroTemp() {
+  const nome = document.getElementById('novo_parc_nome').value.trim();
+  const email = document.getElementById('novo_parc_email').value.trim().toLowerCase();
+  if (!email) { toast('Informe o e-mail', 'error'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { toast('E-mail inválido', 'error'); return; }
+  if (_novoImovelParceiros.find(p => p.email === email)) { toast('E-mail já adicionado', 'error'); return; }
+  _novoImovelParceiros.push({ nome, email, notificar: true });
+  _renderNovoImovelParceiros();
+  document.getElementById('novo_parc_nome').value = '';
+  document.getElementById('novo_parc_email').value = '';
+}
+
+function _renderNovoImovelParceiros() {
+  const c = document.getElementById('novoImovelParceirosList');
+  c.innerHTML = _novoImovelParceiros.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
+      <div style="flex:1;font-size:13px">${p.nome ? `<strong>${escHtml(p.nome)}</strong> — ` : ''}${escHtml(p.email)}</div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap">
+        <input type="checkbox" ${p.notificar?'checked':''} onchange="_novoImovelParceiros[${i}].notificar=this.checked"> Notificar
+      </label>
+      <button onclick="_novoImovelParceiros.splice(${i},1);_renderNovoImovelParceiros()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;line-height:1;padding:0 4px">×</button>
+    </div>`).join('');
 }
 
 // ═══ API ═════════════════════════════════════════════════════════════════════
@@ -1353,15 +1413,21 @@ function renderDashboard() {
           <div class="prop-name">${escHtml(im.nome)}</div>
           <div class="prop-addr">${escHtml(addr)}</div>
           <div class="prop-total">R$ ${formatBRL(total)}</div>
-          <div class="prop-meta"><span>📋 ${cs.length} lançamentos</span><span>📎 ${numDocs} comprovantes</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="prop-meta"><span>📋 ${cs.length} lançamentos</span><span>📎 ${numDocs} comprovantes</span></div>
+            <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openParceiros('${im.id}','${escHtml(im.nome)}')" title="Gerenciar parceiros">👥 Parceiros</button>
+          </div>
           ${top3.length ? `<div class="mini-bar-list">${miniBars}</div>` : ''}
         </div>`;
       } else {
         html += `<div class="prop-card prop-card-list" onclick="goToTab('custos','${im.id}')">
           <div style="flex:1"><div class="prop-name">${escHtml(im.nome)}</div><div class="prop-addr">${escHtml(addr)}</div></div>
-          <div style="text-align:right">
-            <div class="prop-total" style="font-size:18px">R$ ${formatBRL(total)}</div>
-            <div class="prop-meta" style="justify-content:flex-end"><span>📋 ${cs.length}</span><span>📎 ${numDocs}</span></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="text-align:right">
+              <div class="prop-total" style="font-size:18px">R$ ${formatBRL(total)}</div>
+              <div class="prop-meta" style="justify-content:flex-end"><span>📋 ${cs.length}</span><span>📎 ${numDocs}</span></div>
+            </div>
+            <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openParceiros('${im.id}','${escHtml(im.nome)}')" title="Parceiros">👥</button>
           </div>
         </div>`;
       }
@@ -1403,7 +1469,12 @@ async function salvarImovel() {
       data_arrematacao: document.getElementById('im_data_arrematacao').value,
       obs: document.getElementById('im_obs').value.trim(),
     };
-    await apiFetch('/api/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const imovel = await apiFetch('/api/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    for (const p of _novoImovelParceiros) {
+      await apiFetch('/api/parceiros', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imovel_id: imovel.id, nome: p.nome, email: p.email, notificar: p.notificar }) });
+    }
+    _novoImovelParceiros = [];
     closeModal('modalNovoImovel');
     toast('Imóvel cadastrado com sucesso!');
     await loadAll();
@@ -1830,6 +1901,71 @@ async function alterarSenha() {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
   }
+}
+
+// ═══ PARCEIROS ═══════════════════════════════════════════════════════════════
+let _parceirosImovelId = null;
+
+async function openParceiros(imovelId, imovelNome) {
+  _parceirosImovelId = imovelId;
+  document.getElementById('parceirosImovelNome').textContent = imovelNome;
+  document.getElementById('parc_nome').value = '';
+  document.getElementById('parc_email').value = '';
+  await _loadParceiros();
+  openModal('modalParceiros');
+}
+
+async function _loadParceiros() {
+  const lista = document.getElementById('parceirosLista');
+  lista.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px;font-size:13px">Carregando...</div>';
+  try {
+    const parceiros = await apiFetch(`/api/parceiros/${_parceirosImovelId}`);
+    if (!parceiros.length) {
+      lista.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px;font-size:13px">Nenhum parceiro cadastrado. Adicione acima.</div>';
+      return;
+    }
+    lista.innerHTML = parceiros.map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px">
+        <div style="flex:1">
+          ${p.nome ? `<div style="font-size:13px;font-weight:600;color:var(--text)">${escHtml(p.nome)}</div>` : ''}
+          <div style="font-size:12px;color:var(--text-muted)">${escHtml(p.email)}</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap">
+          <input type="checkbox" ${p.notificar?'checked':''} onchange="toggleParceiro('${p.id}',this.checked)"> Notificar
+        </label>
+        <button onclick="deleteParceiro('${p.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:20px;line-height:1;padding:0 4px" title="Remover">×</button>
+      </div>`).join('');
+  } catch(e) {
+    lista.innerHTML = `<div style="color:var(--danger);padding:10px;font-size:13px">${escHtml(e.message)}</div>`;
+  }
+}
+
+async function addParceiro() {
+  const nome = document.getElementById('parc_nome').value.trim();
+  const email = document.getElementById('parc_email').value.trim().toLowerCase();
+  if (!email) { toast('Informe o e-mail', 'error'); return; }
+  try {
+    await apiFetch('/api/parceiros', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imovel_id: _parceirosImovelId, nome, email, notificar: true }) });
+    document.getElementById('parc_nome').value = '';
+    document.getElementById('parc_email').value = '';
+    await _loadParceiros();
+    toast('Parceiro adicionado!');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteParceiro(id) {
+  try {
+    await apiFetch(`/api/parceiros/${id}`, { method: 'DELETE' });
+    await _loadParceiros();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleParceiro(id, notificar) {
+  try {
+    await apiFetch(`/api/parceiros/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificar }) });
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 // ═══ INIT ════════════════════════════════════════════════════════════════════

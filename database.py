@@ -108,6 +108,68 @@ def init_db(db_path=None):
         if USE_PG:
             conn.rollback()
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS parceiros (
+            id TEXT PRIMARY KEY,
+            imovel_id TEXT NOT NULL,
+            nome TEXT,
+            email TEXT NOT NULL,
+            notificar INTEGER NOT NULL DEFAULT 1,
+            criado_em TEXT
+        )
+    """)
+    conn.commit()
+
+    conn.close()
+
+
+def get_imovel_by_id(db_path, imovel_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM imoveis WHERE id = {PH}", (imovel_id,))
+    row = to_dict(c.fetchone())
+    conn.close()
+    return row
+
+
+def get_parceiros(db_path, imovel_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM parceiros WHERE imovel_id = {PH} ORDER BY criado_em", (imovel_id,))
+    rows = [to_dict(r) for r in c.fetchall()]
+    conn.close()
+    return rows
+
+
+def add_parceiro(db_path, imovel_id, nome, email, notificar=True):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    pid = str(uuid.uuid4())
+    now = datetime.now().isoformat()
+    c.execute(
+        f"INSERT INTO parceiros (id, imovel_id, nome, email, notificar, criado_em) VALUES ({PH},{PH},{PH},{PH},{PH},{PH})",
+        (pid, imovel_id, nome or '', email, 1 if notificar else 0, now)
+    )
+    conn.commit()
+    c.execute(f"SELECT * FROM parceiros WHERE id = {PH}", (pid,))
+    row = to_dict(c.fetchone())
+    conn.close()
+    return row
+
+
+def delete_parceiro(db_path, parceiro_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"DELETE FROM parceiros WHERE id = {PH}", (parceiro_id,))
+    conn.commit()
+    conn.close()
+
+
+def update_parceiro_notificar(db_path, parceiro_id, notificar):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"UPDATE parceiros SET notificar = {PH} WHERE id = {PH}", (1 if notificar else 0, parceiro_id))
+    conn.commit()
     conn.close()
 
 

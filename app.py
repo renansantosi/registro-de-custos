@@ -5,12 +5,14 @@ from flask import Flask, request, jsonify, send_from_directory, send_file, redir
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
+import threading
 from database import (
     init_db, get_imoveis, add_imovel, get_custos, get_all_custos,
     add_custo, update_custo, delete_custo, get_custo,
     add_usuario, get_usuario_by_email, get_usuario_by_id,
     change_password, create_reset_token, get_valid_reset_token, delete_reset_token,
-    update_usuario_avatar
+    update_usuario_avatar,
+    get_imovel_by_id, get_parceiros, add_parceiro, delete_parceiro, update_parceiro_notificar
 )
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -269,6 +271,7 @@ def api_add_imovel():
         if not data or not data.get('nome'):
             return jsonify({'error': 'Nome e obrigatorio'}), 400
         imovel = add_imovel(DB_PATH, data, current_user.id)
+        send_imovel_notification(imovel['id'], 'novo_imovel')
         return jsonify(imovel), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -313,6 +316,7 @@ def api_add_custo():
                 return jsonify({'error': f'Campo obrigatorio: {field}'}), 400
 
         custo = add_custo(DB_PATH, data)
+        send_imovel_notification(custo['imovel_id'], 'novo_lancamento', custo)
         return jsonify(custo), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -601,6 +605,180 @@ def export_excel_all():
                          mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ─── PARCEIROS ────────────────────────────────────────────────────────────────
+
+@app.route('/api/parceiros/<imovel_id>', methods=['GET'])
+@login_required
+def api_get_parceiros(imovel_id):
+    if not imovel_belongs_to_user(imovel_id, current_user.id):
+        return jsonify({'error': 'Acesso negado'}), 403
+    return jsonify(get_parceiros(DB_PATH, imovel_id))
+
+
+@app.route('/api/parceiros', methods=['POST'])
+@login_required
+def api_add_parceiro():
+    data = request.get_json(force=True) or {}
+    imovel_id = data.get('imovel_id', '')
+    email = (data.get('email') or '').strip().lower()
+    nome = (data.get('nome') or '').strip()
+    notificar = data.get('notificar', True)
+    if not imovel_id or not email:
+        return jsonify({'error': 'imovel_id e email sao obrigatorios'}), 400
+    if not imovel_belongs_to_user(imovel_id, current_user.id):
+        return jsonify({'error': 'Acesso negado'}), 403
+    parceiro = add_parceiro(DB_PATH, imovel_id, nome, email, notificar)
+    return jsonify(parceiro), 201
+
+
+@app.route('/api/parceiros/<parceiro_id>', methods=['DELETE'])
+@login_required
+def api_delete_parceiro(parceiro_id):
+    delete_parceiro(DB_PATH, parceiro_id)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/parceiros/<parceiro_id>', methods=['PATCH'])
+@login_required
+def api_toggle_parceiro(parceiro_id):
+    data = request.get_json(force=True) or {}
+    update_parceiro_notificar(DB_PATH, parceiro_id, data.get('notificar', True))
+    return jsonify({'ok': True})
+
+
+# ─── EMAIL NOTIFICATIONS ───────────────────────────────────────────────────────
+
+def _build_email_html(imovel, custos, event_type, new_custo=None):
+    addr_parts = []
+    if imovel.get('rua'): addr_parts.append(imovel['rua'])
+    if imovel.get('numero'): addr_parts.append(f"No {imovel['numero']}")
+    if imovel.get('cep'): addr_parts.append(f"CEP {imovel['cep']}")
+    addr = ', '.join(addr_parts) if addr_parts else ''
+
+    total = sum(float(c.get('valor', 0)) for c in custos)
+
+    nicho_totals = {}
+    for c in custos:
+        n = c.get('nicho', 'Outros')
+        nicho_totals[n] = nicho_totals.get(n, 0) + float(c.get('valor', 0))
+
+    def fmt(v):
+        return f"R$ {v:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+    if event_type == 'novo_imovel':
+        event_color = '#2563eb'
+        event_label = '🏠 Novo Imóvel Cadastrado'
+        event_desc = 'Um novo imóvel foi adicionado ao sistema.'
+    else:
+        event_color = '#10b981'
+        event_label = '➕ Novo Lançamento Registrado'
+        event_desc = 'Um novo custo foi lançado neste imóvel.'
+
+    new_item_html = ''
+    if new_custo:
+        new_item_html = f"""
+        <tr><td style="background:#f0fdf4;padding:20px 32px;border-bottom:1px solid #e2e8f0">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#15803d;margin-bottom:10px">Novo Lançamento</div>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #bbf7d0">
+                <table width="100%" cellpadding="4" cellspacing="0">
+                  <tr><td style="font-size:12px;color:#64748b;width:120px">Nicho</td><td style="font-size:13px;font-weight:600">{new_custo.get('nicho','')}</td></tr>
+                  <tr><td style="font-size:12px;color:#64748b">Descrição</td><td style="font-size:13px;font-weight:600">{new_custo.get('descricao','')}</td></tr>
+                  <tr><td style="font-size:12px;color:#64748b">Valor</td><td style="font-size:15px;font-weight:800;color:#15803d">{fmt(float(new_custo.get('valor',0)))}</td></tr>
+                  <tr><td style="font-size:12px;color:#64748b">Data</td><td style="font-size:13px">{new_custo.get('data_pagamento','')}</td></tr>
+                  <tr><td style="font-size:12px;color:#64748b">Pagamento</td><td style="font-size:13px">{new_custo.get('forma_pagamento','')}</td></tr>
+                  {f'<tr><td style="font-size:12px;color:#64748b">Favorecido</td><td style="font-size:13px">{new_custo.get("favorecido","")}</td></tr>' if new_custo.get('favorecido') else ''}
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td></tr>"""
+
+    nicho_rows = ''.join(
+        f'<tr><td style="padding:7px 0;font-size:13px;border-bottom:1px solid #f1f5f9">{n}</td>'
+        f'<td style="padding:7px 0;font-size:13px;font-weight:700;text-align:right;border-bottom:1px solid #f1f5f9">{fmt(v)}</td></tr>'
+        for n, v in sorted(nicho_totals.items(), key=lambda x: -x[1])
+    ) if nicho_totals else '<tr><td colspan="2" style="font-size:13px;color:#64748b;padding:8px 0">Sem lançamentos ainda.</td></tr>'
+
+    arr = imovel.get('data_arrematacao', '')
+    arr_cell = f'<td width="12"></td><td align="center" style="padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Arrematação</div><div style="font-size:15px;font-weight:800;color:#0f172a;margin-top:4px">{arr}</div></td>' if arr else ''
+
+    return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#0f172a">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 16px">
+<tr><td align="center"><table width="580" cellpadding="0" cellspacing="0" style="width:100%;max-width:580px">
+
+<tr><td style="background:#1e3a8a;border-radius:14px 14px 0 0;padding:28px 32px">
+  <div style="color:#a5b4fc;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700">LeilaoPro · Notificação</div>
+  <div style="color:#fff;font-size:22px;font-weight:800;margin-top:8px;line-height:1.2">{imovel.get('nome','')}</div>
+  {f'<div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:6px">{addr}</div>' if addr else ''}
+</td></tr>
+
+<tr><td style="background:{event_color};padding:13px 32px">
+  <span style="color:#fff;font-size:13px;font-weight:700">{event_label}</span>
+  <span style="color:rgba(255,255,255,.75);font-size:12px;margin-left:10px">{event_desc}</span>
+</td></tr>
+
+<tr><td style="background:#fff;padding:24px 32px;border-bottom:1px solid #e2e8f0">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td align="center" style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Total Investido</div>
+      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px">{fmt(total)}</div>
+    </td>
+    <td width="12"></td>
+    <td align="center" style="padding:14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Lançamentos</div>
+      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px">{len(custos)}</div>
+    </td>
+    {arr_cell}
+  </tr></table>
+</td></tr>
+
+{new_item_html}
+
+<tr><td style="background:#fff;padding:20px 32px 28px">
+  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:12px">Breakdown por Nicho</div>
+  <table width="100%" cellpadding="0" cellspacing="0">{nicho_rows}</table>
+</td></tr>
+
+<tr><td style="background:#1e293b;border-radius:0 0 14px 14px;padding:18px 32px;text-align:center">
+  <div style="color:rgba(255,255,255,.55);font-size:11px">LeilaoPro · Registro Original de Custos</div>
+  <div style="color:rgba(255,255,255,.3);font-size:10px;margin-top:4px">Você está recebendo este e-mail pois é parceiro neste imóvel.</div>
+</td></tr>
+
+</table></td></tr></table>
+</body></html>"""
+
+
+def send_imovel_notification(imovel_id, event_type, new_custo=None):
+    if not app.config.get('MAIL_USERNAME'):
+        return
+
+    def _send():
+        with app.app_context():
+            try:
+                imovel = get_imovel_by_id(DB_PATH, imovel_id)
+                if not imovel:
+                    return
+                custos = get_custos(DB_PATH, imovel_id)
+                parceiros = [p for p in get_parceiros(DB_PATH, imovel_id) if p.get('notificar')]
+                if not parceiros:
+                    return
+                subject = f"[LeilaoPro] {'Novo imóvel' if event_type == 'novo_imovel' else 'Novo lançamento'} — {imovel.get('nome','')}"
+                html_body = _build_email_html(imovel, custos, event_type, new_custo)
+                for p in parceiros:
+                    try:
+                        msg = Message(subject=subject, recipients=[p['email']], html=html_body)
+                        mail.send(msg)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+    threading.Thread(target=_send, daemon=True).start()
 
 
 @app.route('/terms')
