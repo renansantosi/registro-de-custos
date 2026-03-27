@@ -101,6 +101,13 @@ def init_db(db_path=None):
         if USE_PG:
             conn.rollback()
 
+    try:
+        c.execute("ALTER TABLE usuarios ADD COLUMN avatar_path TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        if USE_PG:
+            conn.rollback()
+
     conn.close()
 
 
@@ -318,5 +325,13 @@ def delete_reset_token(db_path, token):
     conn = get_conn(db_path)
     c = conn.cursor()
     c.execute(f"DELETE FROM reset_tokens WHERE token = {PH}", (token,))
+    conn.commit()
+    conn.close()
+
+
+def update_usuario_avatar(db_path, user_id, avatar_path):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(f"UPDATE usuarios SET avatar_path = {PH} WHERE id = {PH}", (avatar_path, user_id))
     conn.commit()
     conn.close()

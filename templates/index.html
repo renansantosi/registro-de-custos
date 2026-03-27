@@ -100,13 +100,59 @@
     font-size: 11px; font-weight: 800; color: white; flex-shrink: 0;
   }
   .user-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
-  .btn-logout {
-    background: none; border: none; cursor: pointer;
-    color: rgba(255,255,255,.5); font-size: 17px; padding: 4px;
-    border-radius: 5px; transition: color .15s, background .15s;
+  /* User menu dropdown */
+  .user-menu { position: relative; }
+  .user-menu-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 10px 4px 5px;
+    background: rgba(255,255,255,.08);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: pointer; color: #fff; font-size: 13px;
+    font-weight: 600; font-family: inherit;
+    transition: background .15s;
+  }
+  .user-menu-btn:hover { background: rgba(255,255,255,.15); }
+  .user-chevron { font-size: 9px; opacity: .6; transition: transform .2s; margin-left: 2px; }
+  .user-menu.open .user-chevron { transform: rotate(180deg); }
+  .user-dropdown {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    min-width: 200px; z-index: 999;
+    border: 1px solid var(--border);
+    overflow: hidden; display: none;
+  }
+  .user-menu.open .user-dropdown { display: block; }
+  .user-dropdown-header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+  }
+  .user-dropdown-header strong { display: block; font-size: 13px; color: var(--text); font-weight: 700; }
+  .user-dropdown-header span { font-size: 11px; color: var(--text-muted); }
+  .user-dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; cursor: pointer;
+    font-size: 13px; color: var(--text);
+    transition: background .12s; border: none;
+    background: none; width: 100%; text-align: left;
+    font-family: inherit; font-weight: 500;
+  }
+  .user-dropdown-item:hover { background: var(--bg); }
+  .user-dropdown-item.danger { color: var(--danger); }
+  .user-dropdown-item.danger:hover { background: #fef2f2; }
+  .user-dropdown-divider { height: 1px; background: var(--border); }
+  .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+  .avatar-wrap { position: relative; flex-shrink: 0; }
+  .avatar-edit-btn {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); border: 2px solid #fff;
+    color: #fff; font-size: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     line-height: 1;
   }
-  .btn-logout:hover { color: var(--danger); background: rgba(239,68,68,.12); }
 
   /* Buttons */
   .btn {
@@ -581,11 +627,24 @@
   <div class="header-actions">
     <button class="btn btn-outline btn-sm btn-header-hide" onclick="openNovoImovelModal()">+ Novo Imovel</button>
     <button class="btn btn-accent btn-sm btn-header-hide" onclick="exportarExcelAll()">&#8659; Excel</button>
-    <div class="user-badge" onclick="openPerfil()" title="Meu Perfil">
-      <div class="user-avatar" id="userAvatar">?</div>
-      <span class="user-name" id="userName">{{ usuario_nome }}</span>
+    <div class="user-menu" id="userMenu">
+      <button class="user-menu-btn" onclick="toggleUserMenu(event)">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">{{ usuario_nome }}</span>
+        <span class="user-chevron">▾</span>
+      </button>
+      <div class="user-dropdown">
+        <div class="user-dropdown-header">
+          <strong id="dropdownNome">{{ usuario_nome }}</strong>
+          <span id="dropdownEmail">—</span>
+        </div>
+        <button class="user-dropdown-item" onclick="openPerfilTab('perfil'); closeUserMenu()">👤 Meu Perfil</button>
+        <button class="user-dropdown-item" onclick="openPerfilTab('senha'); closeUserMenu()">🔑 Trocar Senha</button>
+        <button class="user-dropdown-item" onclick="openContato(); closeUserMenu()">✉️ Contato</button>
+        <div class="user-dropdown-divider"></div>
+        <button class="user-dropdown-item danger" onclick="doLogout()">⏻ Sair</button>
+      </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()" title="Sair">&#x23FB;</button>
   </div>
 </header>
 
@@ -997,34 +1056,69 @@
 <div class="modal-backdrop hidden" id="modalPerfil" onclick="backdropClose(event,'modalPerfil')">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">Meu Perfil</div>
+      <div class="modal-title" id="perfilModalTitle">Meu Perfil</div>
       <button class="modal-close" onclick="closeModal('modalPerfil')">&#x2715;</button>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid var(--border)">
-      <div class="user-avatar" style="width:46px;height:46px;font-size:18px;flex-shrink:0" id="perfilAvatar">?</div>
-      <div>
-        <div style="font-weight:700;font-size:15px;color:var(--text)" id="perfilNome">—</div>
-        <div style="font-size:13px;color:var(--text-muted)" id="perfilEmail">—</div>
+
+    <!-- TAB: Meu Perfil -->
+    <div id="perfilTabPerfil">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:#f8fafc;border-radius:12px;border:1px solid var(--border)">
+        <div class="avatar-wrap">
+          <div class="user-avatar" style="width:64px;height:64px;font-size:24px;cursor:pointer" id="perfilAvatar" onclick="document.getElementById('avatarInput').click()" title="Trocar foto">?</div>
+          <button class="avatar-edit-btn" onclick="document.getElementById('avatarInput').click()" title="Trocar foto">✎</button>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px;color:var(--text)" id="perfilNome">—</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:2px" id="perfilEmail">—</div>
+          <button onclick="document.getElementById('avatarInput').click()" class="btn btn-ghost btn-xs" style="margin-top:8px">📷 Trocar Foto</button>
+        </div>
+      </div>
+      <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none" onchange="uploadAvatar(this)">
+      <div id="avatarMsg" style="padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:4px;display:none"></div>
+    </div>
+
+    <!-- TAB: Trocar Senha -->
+    <div id="perfilTabSenha" style="display:none">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">Alterar Senha</div>
+      <div id="perfilError" style="background:#fef2f2;border:1px solid #fecaca;color:var(--danger);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
+      <div id="perfilSuccess" style="background:#f0fdf4;border:1px solid #bbf7d0;color:var(--success);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
+      <div class="form-group">
+        <label>Senha Atual</label>
+        <input type="password" id="perfil_senha_atual" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label>Nova Senha</label>
+        <input type="password" id="perfil_senha_nova" placeholder="Min. 6 caracteres" />
+      </div>
+      <div class="form-group">
+        <label>Confirmar Nova Senha</label>
+        <input type="password" id="perfil_senha_confirmar" placeholder="Repita a nova senha" />
       </div>
     </div>
-    <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">Alterar Senha</div>
-    <div id="perfilError" style="background:#fef2f2;border:1px solid #fecaca;color:var(--danger);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
-    <div id="perfilSuccess" style="background:#f0fdf4;border:1px solid #bbf7d0;color:var(--success);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none"></div>
-    <div class="form-group">
-      <label>Senha Atual</label>
-      <input type="password" id="perfil_senha_atual" placeholder="••••••••" />
-    </div>
-    <div class="form-group">
-      <label>Nova Senha</label>
-      <input type="password" id="perfil_senha_nova" placeholder="Min. 6 caracteres" />
-    </div>
-    <div class="form-group">
-      <label>Confirmar Nova Senha</label>
-      <input type="password" id="perfil_senha_confirmar" placeholder="Repita a nova senha" />
-    </div>
+
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modalPerfil')">Fechar</button>
-      <button class="btn btn-primary" onclick="alterarSenha()">Salvar Senha</button>
+      <button class="btn btn-primary" id="perfilSenhaBtn" onclick="alterarSenha()" style="display:none">Salvar Senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL: CONTATO ─── -->
+<div class="modal-backdrop hidden" id="modalContato" onclick="backdropClose(event,'modalContato')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">✉️ Contato</div>
+      <button class="modal-close" onclick="closeModal('modalContato')">&#x2715;</button>
+    </div>
+    <div style="padding:4px 0 16px;font-size:14px;color:var(--text-muted);line-height:1.6">
+      Dúvidas, sugestões ou problemas com o sistema?<br>Entre em contato pelo e-mail abaixo.
+    </div>
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:6px">E-mail de suporte</div>
+      <a href="mailto:contato@leilaopro.com.br" style="font-size:15px;font-weight:700;color:var(--accent);text-decoration:none">contato@leilaopro.com.br</a>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modalContato')">Fechar</button>
     </div>
   </div>
 </div>
@@ -1096,7 +1190,32 @@ document.addEventListener('input', function(e) {
 (function initUser() {
   const name = document.getElementById('userName').textContent.trim();
   if (name) document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+  apiFetch('/api/auth/me').then(me => {
+    document.getElementById('dropdownEmail').textContent = me.email || '—';
+    document.getElementById('dropdownNome').textContent = me.nome || name;
+    window._userMe = me;
+    if (me.avatar_url) setAvatarImg(document.getElementById('userAvatar'), me.avatar_url);
+  }).catch(() => {});
 })();
+
+function setAvatarImg(el, url) {
+  el.textContent = '';
+  const img = document.createElement('img');
+  img.src = url;
+  img.className = 'avatar-img';
+  img.onerror = () => { el.removeChild(img); el.textContent = (window._userMe?.nome || '?')[0].toUpperCase(); };
+  el.appendChild(img);
+}
+
+// ─── User menu dropdown ───
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  document.getElementById('userMenu').classList.toggle('open');
+}
+function closeUserMenu() {
+  document.getElementById('userMenu').classList.remove('open');
+}
+document.addEventListener('click', () => closeUserMenu());
 
 async function doLogout() {
   try { await fetch('/api/auth/logout', { method: 'POST' }); } finally {
@@ -1626,20 +1745,63 @@ window.addEventListener('resize', () => {
 });
 
 // ═══ PERFIL ══════════════════════════════════════════════════════════════════
-function openPerfil() {
-  const nome = document.getElementById('userName').textContent.trim();
+function openPerfilTab(tab) {
+  const me = window._userMe || {};
+  const nome = me.nome || document.getElementById('userName').textContent.trim();
   document.getElementById('perfilNome').textContent = nome;
-  document.getElementById('perfilAvatar').textContent = nome ? nome[0].toUpperCase() : '?';
-  document.getElementById('perfilEmail').textContent = 'Carregando...';
+  document.getElementById('perfilEmail').textContent = me.email || 'Carregando...';
+
+  // Set avatar in modal
+  const avEl = document.getElementById('perfilAvatar');
+  avEl.textContent = '';
+  if (me.avatar_url) {
+    setAvatarImg(avEl, me.avatar_url);
+  } else {
+    avEl.textContent = nome ? nome[0].toUpperCase() : '?';
+  }
+
+  // Show/hide tabs
+  const isPerfil = tab !== 'senha';
+  document.getElementById('perfilTabPerfil').style.display = isPerfil ? 'block' : 'none';
+  document.getElementById('perfilTabSenha').style.display = isPerfil ? 'none' : 'block';
+  document.getElementById('perfilSenhaBtn').style.display = isPerfil ? 'none' : 'inline-flex';
+  document.getElementById('perfilModalTitle').textContent = isPerfil ? 'Meu Perfil' : 'Trocar Senha';
+
+  // Reset senha fields
   document.getElementById('perfilError').style.display = 'none';
   document.getElementById('perfilSuccess').style.display = 'none';
   document.getElementById('perfil_senha_atual').value = '';
   document.getElementById('perfil_senha_nova').value = '';
   document.getElementById('perfil_senha_confirmar').value = '';
-  apiFetch('/api/auth/me').then(me => {
-    document.getElementById('perfilEmail').textContent = me.email;
-  }).catch(() => {});
+  document.getElementById('avatarMsg').style.display = 'none';
+
   openModal('modalPerfil');
+}
+
+function openContato() { openModal('modalContato'); }
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const msgEl = document.getElementById('avatarMsg');
+  msgEl.style.display = 'none';
+  const fd = new FormData();
+  fd.append('avatar', file);
+  try {
+    const res = await fetch('/api/auth/upload-avatar', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao enviar foto');
+    // Update avatars everywhere
+    window._userMe = { ...(window._userMe || {}), avatar_url: data.avatar_url };
+    setAvatarImg(document.getElementById('perfilAvatar'), data.avatar_url);
+    setAvatarImg(document.getElementById('userAvatar'), data.avatar_url);
+    msgEl.style.cssText = 'display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d';
+    msgEl.textContent = 'Foto atualizada com sucesso!';
+  } catch(e) {
+    msgEl.style.cssText = 'display:block;background:#fef2f2;border:1px solid #fecaca;color:#dc2626';
+    msgEl.textContent = e.message;
+  }
+  input.value = '';
 }
 
 async function alterarSenha() {

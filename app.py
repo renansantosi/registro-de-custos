@@ -9,7 +9,8 @@ from database import (
     init_db, get_imoveis, add_imovel, get_custos, get_all_custos,
     add_custo, update_custo, delete_custo, get_custo,
     add_usuario, get_usuario_by_email, get_usuario_by_id,
-    change_password, create_reset_token, get_valid_reset_token, delete_reset_token
+    change_password, create_reset_token, get_valid_reset_token, delete_reset_token,
+    update_usuario_avatar
 )
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -141,7 +142,30 @@ def api_logout():
 @app.route('/api/auth/me')
 @login_required
 def api_me():
-    return jsonify({'id': current_user.id, 'nome': current_user.nome, 'email': current_user.email})
+    usuario = get_usuario_by_id(DB_PATH, current_user.id)
+    avatar_url = None
+    if usuario and usuario.get('avatar_path'):
+        avatar_url = url_for('serve_upload', filename=usuario['avatar_path'])
+    return jsonify({'id': current_user.id, 'nome': current_user.nome, 'email': current_user.email, 'avatar_url': avatar_url})
+
+
+@app.route('/api/auth/upload-avatar', methods=['POST'])
+@login_required
+def api_upload_avatar():
+    file = request.files.get('avatar')
+    if not file or file.filename == '':
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Formato nao permitido. Use JPG, PNG ou WEBP.'}), 400
+    usuario = get_usuario_by_id(DB_PATH, current_user.id)
+    if usuario and usuario.get('avatar_path'):
+        old = os.path.join(UPLOAD_FOLDER, usuario['avatar_path'])
+        if os.path.exists(old):
+            os.remove(old)
+    unique_name, _, _ = save_upload(file)
+    update_usuario_avatar(DB_PATH, current_user.id, unique_name)
+    avatar_url = url_for('serve_upload', filename=unique_name)
+    return jsonify({'ok': True, 'avatar_url': avatar_url})
 
 
 @app.route('/api/auth/change-password', methods=['POST'])
