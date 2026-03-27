@@ -860,8 +860,10 @@ def api_viabilidade():
             messages=[{
                 'role': 'user',
                 'content': [
-                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': edital_b64}, 'title': 'Edital do Leilão'},
-                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': matricula_b64}, 'title': 'Matrícula do Imóvel'},
+                    {'type': 'text', 'text': 'Documento 1 — Edital do Leilão (PDF):'},
+                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': edital_b64}},
+                    {'type': 'text', 'text': 'Documento 2 — Matrícula do Imóvel (PDF):'},
+                    {'type': 'document', 'source': {'type': 'base64', 'media_type': 'application/pdf', 'data': matricula_b64}},
                     {'type': 'text', 'text': VIABILIDADE_PROMPT}
                 ]
             }]
