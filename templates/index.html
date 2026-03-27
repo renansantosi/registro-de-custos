@@ -754,8 +754,8 @@
             </div>
 
             <div class="form-group full">
-              <label>Descrição <span class="required-mark">*</span></label>
-              <input type="text" id="l_descricao" placeholder="Descreva o custo..." required />
+              <label>Descrição</label>
+              <input type="text" id="l_descricao" placeholder="Descreva o custo (opcional)..." />
             </div>
 
             <div class="form-group">
@@ -1017,8 +1017,8 @@
         <input type="text" id="edit_valor" data-nocap required />
       </div>
       <div class="form-group full">
-        <label>Descrição <span class="required-mark">*</span></label>
-        <input type="text" id="edit_descricao" required />
+        <label>Descrição</label>
+        <input type="text" id="edit_descricao" />
       </div>
       <div class="form-group">
         <label>Data do Pagamento <span class="required-mark">*</span></label>
@@ -1409,10 +1409,15 @@ function renderDashboard() {
           <div class="mini-bar-val">R$ ${formatBRL(v)}</div>
         </div>`).join('');
       if (currentView === 'grid') {
+        const lastLanc = cs.length ? cs[0].data_pagamento : null;
         html += `<div class="prop-card" onclick="goToTab('custos','${im.id}')">
           <div class="prop-name">${escHtml(im.nome)}</div>
           <div class="prop-addr">${escHtml(addr)}</div>
           <div class="prop-total">R$ ${formatBRL(total)}</div>
+          <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
+            ${im.data_arrematacao ? `<span style="font-size:11px;color:var(--text-muted)">🏷️ Arrematado: <strong>${im.data_arrematacao}</strong></span>` : ''}
+            ${lastLanc ? `<span style="font-size:11px;color:var(--text-muted)">📅 Último lançamento: <strong>${lastLanc}</strong></span>` : ''}
+          </div>
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="prop-meta"><span>📋 ${cs.length} lançamentos</span><span>📎 ${numDocs} comprovantes</span></div>
             <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openParceiros('${im.id}','${escHtml(im.nome)}')" title="Gerenciar parceiros">👥 Parceiros</button>
@@ -1421,7 +1426,14 @@ function renderDashboard() {
         </div>`;
       } else {
         html += `<div class="prop-card prop-card-list" onclick="goToTab('custos','${im.id}')">
-          <div style="flex:1"><div class="prop-name">${escHtml(im.nome)}</div><div class="prop-addr">${escHtml(addr)}</div></div>
+          <div style="flex:1">
+            <div class="prop-name">${escHtml(im.nome)}</div>
+            <div class="prop-addr">${escHtml(addr)}</div>
+            <div style="display:flex;gap:14px;margin-top:4px;flex-wrap:wrap">
+              ${im.data_arrematacao ? `<span style="font-size:11px;color:var(--text-muted)">🏷️ Arrematado: <strong>${im.data_arrematacao}</strong></span>` : ''}
+              ${lastLanc ? `<span style="font-size:11px;color:var(--text-muted)">📅 Último: <strong>${lastLanc}</strong></span>` : ''}
+            </div>
+          </div>
           <div style="display:flex;align-items:center;gap:12px">
             <div style="text-align:right">
               <div class="prop-total" style="font-size:18px">R$ ${formatBRL(total)}</div>

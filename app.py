@@ -310,7 +310,7 @@ def api_add_custo():
         if not imovel_belongs_to_user(data.get('imovel_id', ''), current_user.id):
             return jsonify({'error': 'Acesso negado'}), 403
 
-        required = ['imovel_id', 'nicho', 'descricao', 'valor', 'data_pagamento', 'forma_pagamento']
+        required = ['imovel_id', 'nicho', 'valor', 'data_pagamento', 'forma_pagamento']
         for field in required:
             if not data.get(field):
                 return jsonify({'error': f'Campo obrigatorio: {field}'}), 400
