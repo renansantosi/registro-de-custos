@@ -1206,6 +1206,9 @@ function nichoBadge(nicho) {
 function formatBRL(value) {
   return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
 }
+function fmtR(value) {
+  return 'R$\u00a0' + formatBRL(value);
+}
 function parseBRL(str) {
   if (!str) return 0;
   return parseFloat(str.replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
@@ -1394,7 +1397,7 @@ function renderDashboard() {
     lancsAll += cs.length;
     compAll += cs.filter(c => c.comprovante_path).length;
   });
-  document.getElementById('gtTotal').textContent = 'R$ ' + formatBRL(totalAll);
+  document.getElementById('gtTotal').textContent = fmtR(totalAll);
   document.getElementById('gtImoveis').textContent = allImoveis.length;
   document.getElementById('gtLancamentos').textContent = lancsAll;
   document.getElementById('gtComprovantes').textContent = compAll;
@@ -1419,14 +1422,14 @@ function renderDashboard() {
         `<div class="mini-bar-item">
           <div class="bar-label" title="${n}">${n}</div>
           <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(v/maxVal*100).toFixed(0)}%"></div></div>
-          <div class="mini-bar-val">R$ ${formatBRL(v)}</div>
+          <div class="mini-bar-val" style="white-space:nowrap">${fmtR(v)}</div>
         </div>`).join('');
       if (currentView === 'grid') {
         const lastLanc = cs.length ? cs[0].data_pagamento : null;
         html += `<div class="prop-card" onclick="goToTab('custos','${im.id}')">
           <div class="prop-name">${escHtml(im.nome)}</div>
           <div class="prop-addr">${escHtml(addr)}</div>
-          <div class="prop-total">R$ ${formatBRL(total)}</div>
+          <div class="prop-total">${fmtR(total)}</div>
           <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
             ${im.data_arrematacao ? `<span style="font-size:11px;color:var(--text-muted)">🏷️ Arrematado: <strong>${im.data_arrematacao}</strong></span>` : ''}
             ${lastLanc ? `<span style="font-size:11px;color:var(--text-muted)">📅 Último lançamento: <strong>${lastLanc}</strong></span>` : ''}
@@ -1449,7 +1452,7 @@ function renderDashboard() {
           </div>
           <div style="display:flex;align-items:center;gap:12px">
             <div style="text-align:right">
-              <div class="prop-total" style="font-size:18px">R$ ${formatBRL(total)}</div>
+              <div class="prop-total" style="font-size:18px">${fmtR(total)}</div>
               <div class="prop-meta" style="justify-content:flex-end"><span>📋 ${cs.length}</span><span>📎 ${numDocs}</span></div>
             </div>
             <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openParceiros('${im.id}','${escHtml(im.nome)}')" title="Parceiros">👥</button>
@@ -1474,7 +1477,7 @@ function renderDashboard() {
       const c = NICHO_COLORS[n] || NICHO_COLORS['Outros'];
       return `<div class="nicho-item" style="background:${c.bg}">
         <span class="nicho-name" style="color:${c.fg}">${n}</span>
-        <span class="nicho-val" style="color:${c.fg}">R$ ${formatBRL(v)}</span>
+        <span class="nicho-val" style="color:${c.fg};white-space:nowrap">${fmtR(v)}</span>
       </div>`;
     }).join('');
   }
@@ -1577,7 +1580,7 @@ function renderCustos() {
       <td>${escHtml(c.favorecido || '—')}</td>
       <td>${escHtml(c.forma_pagamento)}</td>
       <td>${compLink}</td>
-      <td class="text-right font-bold">R$ ${formatBRL(c.valor)}</td>
+      <td class="text-right font-bold" style="white-space:nowrap">${fmtR(c.valor)}</td>
       <td><div class="actions-cell">
         <button class="btn btn-ghost btn-xs" onclick="openEditModal('${c.id}')" title="Editar">✏️</button>
         <button class="btn btn-danger btn-xs" onclick="deleteCusto('${c.id}')" title="Excluir">🗑</button>
@@ -1586,7 +1589,7 @@ function renderCustos() {
   }).join('');
   tfoot.innerHTML = `<tr>
     <td colspan="6" class="text-right">Total (${custos.length} lançamentos)</td>
-    <td class="text-right">R$ ${formatBRL(total)}</td>
+    <td class="text-right" style="white-space:nowrap">${fmtR(total)}</td>
     <td></td>
   </tr>`;
 }
@@ -1702,13 +1705,13 @@ function renderHistorico() {
           <div class="t-desc">${escHtml(c.descricao)}</div>
           <div class="t-meta">${nichoBadge(c.nicho)} &nbsp;${escHtml(c._imovelNome)} &nbsp;· ${escHtml(c.forma_pagamento)}${c.favorecido ? ` &nbsp;· ${escHtml(c.favorecido)}` : ''}${compLink ? ` &nbsp;· ${compLink}` : ''}</div>
         </div>
-        <div class="timeline-value">R$ ${formatBRL(c.valor)}</div>
+        <div class="timeline-value" style="white-space:nowrap">${fmtR(c.valor)}</div>
       </div>`;
     }).join('');
     return `<div class="timeline-day">
       <div class="timeline-day-header">
         <span>${formatDate(d)}</span>
-        <span class="timeline-day-total">R$ ${formatBRL(dayTotal)}</span>
+        <span class="timeline-day-total" style="white-space:nowrap">${fmtR(dayTotal)}</span>
       </div>
       ${entries}
     </div>`;
