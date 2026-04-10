@@ -935,6 +935,11 @@ ANÁLISE ORIGINAL:
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/ping')
+def ping():
+    return 'ok', 200
+
+
 @app.route('/terms')
 def terms_page():
     return render_template('terms.html')
