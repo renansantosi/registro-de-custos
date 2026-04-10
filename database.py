@@ -41,6 +41,17 @@ def init_db(db_path=None):
     c = conn.cursor()
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS viabilidade_analises (
+            id TEXT PRIMARY KEY,
+            usuario_id TEXT NOT NULL,
+            nome_edital TEXT,
+            nome_matricula TEXT,
+            analise TEXT NOT NULL,
+            criado_em TEXT
+        )
+    """)
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
             id TEXT PRIMARY KEY,
             nome TEXT NOT NULL,
@@ -395,5 +406,58 @@ def update_usuario_avatar(db_path, user_id, avatar_path):
     conn = get_conn(db_path)
     c = conn.cursor()
     c.execute(f"UPDATE usuarios SET avatar_path = {PH} WHERE id = {PH}", (avatar_path, user_id))
+    conn.commit()
+    conn.close()
+
+
+# ─── VIABILIDADE ANALISES ─────────────────────────────────────────────────────
+
+def save_viabilidade(db_path, usuario_id, analise, nome_edital='', nome_matricula=''):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    analise_id = str(uuid.uuid4())
+    now = datetime.now().isoformat()
+    c.execute(
+        f"INSERT INTO viabilidade_analises (id, usuario_id, nome_edital, nome_matricula, analise, criado_em) VALUES ({PH},{PH},{PH},{PH},{PH},{PH})",
+        (analise_id, usuario_id, nome_edital or '', nome_matricula or '', analise, now)
+    )
+    conn.commit()
+    c.execute(f"SELECT * FROM viabilidade_analises WHERE id = {PH}", (analise_id,))
+    row = to_dict(c.fetchone())
+    conn.close()
+    return row
+
+
+def get_viabilidades(db_path, usuario_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(
+        f"SELECT id, usuario_id, nome_edital, nome_matricula, criado_em FROM viabilidade_analises WHERE usuario_id = {PH} ORDER BY criado_em DESC",
+        (usuario_id,)
+    )
+    rows = [to_dict(r) for r in c.fetchall()]
+    conn.close()
+    return rows
+
+
+def get_viabilidade_by_id(db_path, analise_id, usuario_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(
+        f"SELECT * FROM viabilidade_analises WHERE id = {PH} AND usuario_id = {PH}",
+        (analise_id, usuario_id)
+    )
+    row = to_dict(c.fetchone())
+    conn.close()
+    return row
+
+
+def delete_viabilidade(db_path, analise_id, usuario_id):
+    conn = get_conn(db_path)
+    c = conn.cursor()
+    c.execute(
+        f"DELETE FROM viabilidade_analises WHERE id = {PH} AND usuario_id = {PH}",
+        (analise_id, usuario_id)
+    )
     conn.commit()
     conn.close()

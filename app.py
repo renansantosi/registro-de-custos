@@ -12,7 +12,8 @@ from database import (
     add_usuario, get_usuario_by_email, get_usuario_by_id,
     change_password, create_reset_token, get_valid_reset_token, delete_reset_token,
     update_usuario_avatar,
-    get_imovel_by_id, get_parceiros, add_parceiro, delete_parceiro, update_parceiro_notificar
+    get_imovel_by_id, get_parceiros, add_parceiro, delete_parceiro, update_parceiro_notificar,
+    save_viabilidade, get_viabilidades, get_viabilidade_by_id, delete_viabilidade
 )
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -868,9 +869,37 @@ def api_viabilidade():
                 ]
             }]
         )
-        return jsonify({'ok': True, 'analise': message.content[0].text})
+        analise_texto = message.content[0].text
+        saved = save_viabilidade(
+            DB_PATH, current_user.id, analise_texto,
+            nome_edital=edital.filename, nome_matricula=matricula.filename
+        )
+        return jsonify({'ok': True, 'analise': analise_texto, 'analise_id': saved['id']})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/viabilidade/historico', methods=['GET'])
+@login_required
+def api_viabilidade_historico():
+    rows = get_viabilidades(DB_PATH, current_user.id)
+    return jsonify(rows)
+
+
+@app.route('/api/viabilidade/<analise_id>', methods=['GET'])
+@login_required
+def api_viabilidade_get(analise_id):
+    row = get_viabilidade_by_id(DB_PATH, analise_id, current_user.id)
+    if not row:
+        return jsonify({'error': 'Não encontrado'}), 404
+    return jsonify(row)
+
+
+@app.route('/api/viabilidade/<analise_id>', methods=['DELETE'])
+@login_required
+def api_viabilidade_delete(analise_id):
+    delete_viabilidade(DB_PATH, analise_id, current_user.id)
+    return jsonify({'ok': True})
 
 
 @app.route('/api/viabilidade/chat', methods=['POST'])

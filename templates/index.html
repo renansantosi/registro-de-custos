@@ -962,6 +962,14 @@
             ✔ Score de oportunidade 0–100<br>
             ✔ Lance máximo recomendado
           </div>
+
+          <!-- Histórico de análises -->
+          <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">📂 Análises Salvas</div>
+            <div id="viabHistoricoLista" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto">
+              <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">Carregando...</div>
+            </div>
+          </div>
         </div>
 
         <!-- Resultado -->
@@ -1432,6 +1440,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (item.dataset.tab === 'custos') renderCustos();
     if (item.dataset.tab === 'historico') renderHistorico();
     if (item.dataset.tab === 'documentos') renderDocumentos();
+    if (item.dataset.tab === 'viabilidade') carregarHistoricoViab();
   });
 });
 
@@ -2112,6 +2121,68 @@ async function toggleParceiro(id, notificar) {
 
 // ═══ VIABILIDADE ═════════════════════════════════════════════════════════════
 const _viabFiles = {};
+let _viabAnaliseId = null;
+
+async function carregarHistoricoViab() {
+  const lista = document.getElementById('viabHistoricoLista');
+  if (!lista) return;
+  try {
+    const res = await fetch('/api/viabilidade/historico');
+    if (!res.ok) { lista.innerHTML = ''; return; }
+    const rows = await res.json();
+    if (!rows.length) {
+      lista.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px">Nenhuma análise salva ainda.</div>';
+      return;
+    }
+    lista.innerHTML = rows.map(r => {
+      const nome = r.nome_edital ? escHtml(r.nome_edital.replace(/\.pdf$/i,'')) : 'Análise';
+      const data = r.criado_em ? new Date(r.criado_em).toLocaleDateString('pt-BR') : '';
+      const ativo = r.id === _viabAnaliseId ? 'border-color:var(--accent);background:#eef2ff;' : '';
+      return `<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:8px;cursor:pointer;${ativo}" onclick="carregarAnaliseViab('${r.id}')">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.nome_edital||'')}">${nome}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${data}</div>
+        </div>
+        <button onclick="event.stopPropagation();excluirAnaliseViab('${r.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0" title="Excluir">×</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    lista.innerHTML = '';
+  }
+}
+
+async function carregarAnaliseViab(id) {
+  try {
+    const res = await fetch(`/api/viabilidade/${id}`);
+    if (!res.ok) { toast('Análise não encontrada', 'error'); return; }
+    const row = await res.json();
+    _viabAnaliseOriginal = row.analise;
+    _viabAnaliseId = row.id;
+    _viabHistorico = [];
+    document.getElementById('viabResultado').innerHTML = _renderViabilidade(row.analise);
+    carregarHistoricoViab();
+    document.getElementById('viabResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function excluirAnaliseViab(id) {
+  if (!confirm('Excluir esta análise salva?')) return;
+  try {
+    await fetch(`/api/viabilidade/${id}`, { method: 'DELETE' });
+    if (_viabAnaliseId === id) {
+      _viabAnaliseId = null;
+      _viabAnaliseOriginal = '';
+      _viabHistorico = [];
+      document.getElementById('viabResultado').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted);text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">🎯</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Análise de Viabilidade</div>
+        <div style="font-size:13px;max-width:320px">Faça upload do edital e da matrícula ao lado e clique em "Analisar" para receber uma análise completa com IA.</div>
+      </div>`;
+    }
+    carregarHistoricoViab();
+    toast('Análise excluída.');
+  } catch(e) { toast(e.message, 'error'); }
+}
 
 function setFile(tipo, input) {
   const file = input.files[0];
@@ -2153,8 +2224,10 @@ async function analisarViabilidade() {
     if (!res.ok) throw new Error(data.error || 'Erro na análise');
 
     _viabAnaliseOriginal = data.analise;
+    _viabAnaliseId = data.analise_id || null;
     _viabHistorico = [];
     resultado.innerHTML = _renderViabilidade(data.analise);
+    carregarHistoricoViab();
   } catch(e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
